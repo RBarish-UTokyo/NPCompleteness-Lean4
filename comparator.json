@@ -7,6 +7,8 @@
     "Complexity.exactThreeSAT_np_complete",
     "Complexity.leOneLeTwoSAT_np_complete",
     "Complexity.binarySAT_np_complete",
+    "Complexity.planarThreeSAT_np_complete",
+    "Complexity.cyclePlanarThreeSAT_np_complete",
     "Complexity.inNP_iff_nondeterministicPolyTime"
   ],
   "definition_names": [],

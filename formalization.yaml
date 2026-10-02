@@ -12,8 +12,13 @@ project:
     most three literals per clause (threeSAT_np_complete); exactly-3-SAT, with exactly three
     literals per clause on three distinct variables (exactThreeSAT_np_complete);
     (≤1,≤2)-SAT, with two or three literals per clause and every variable occurring at most
-    once positively and at most twice negatively (leOneLeTwoSAT_np_complete); and SAT with
-    variable indices written in binary (binarySAT_np_complete). NP-complete means: in NP,
+    once positively and at most twice negatively (leOneLeTwoSAT_np_complete); SAT with
+    variable indices written in binary (binarySAT_np_complete); planar 3-SAT, whose
+    variable–clause incidence graph is planar (planarThreeSAT_np_complete); and Lichtenstein's
+    planar 3-SAT, whose incidence graph stays planar with the cycle through the variables
+    added (cyclePlanarThreeSAT_np_complete). Planarity is Gonthier's from the formal proof of
+    the Four Color Theorem: a graph is planar when a hypermap on its half-edges embeds it
+    with genus zero, the genus being computed from the Euler formula. NP-complete means: in NP,
     and every language in NP reduces to it by a polynomial-time many-one (Karp) reduction.
     A further compared theorem, inNP_iff_nondeterministicPolyTime, proves that NP, defined
     by verifiers, is the class of languages accepted in polynomial time by nondeterministic
@@ -36,8 +41,13 @@ project:
     formula generator itself: every literal occurrence gets its own copy variable, a cycle of
     implications links the copies of each variable, long clauses are split by chains, and
     short clauses are padded. The binary variant is reached by a machine converting unary
-    indices to binary. Membership in NP is proved with explicit verifier machines for every
-    language. For the nondeterministic characterization, a deterministic verifier simulates
+    indices to binary. For planar 3-SAT, the Cook–Levin formula is turned into a grid formula
+    in the style of Lichtenstein (one column of crossover gadgets per clause, copies of each
+    variable joined by nested two-literal clauses), proved equisatisfiable and planar with
+    its variable cycle through a general lemma on formulas drawn as combs; the plain version
+    subdivides the cycle edges. Membership in NP is proved with explicit verifier machines for every
+    language; for the planar versions the certificate also describes a planar embedding.
+    For the nondeterministic characterization, a deterministic verifier simulates
     a nondeterministic machine with its choices read from the certificate, and conversely a
     nondeterministic machine guesses a certificate in a unary budget and runs the verifier.
     The development was written by AI under human
@@ -111,6 +121,32 @@ sources:
       one positive and at most two negative occurrences per variable, clauses of two or
       three literals) is proved with that construction, applied to the Cook–Levin formulas.
     author_endorsement: not-contacted
+  - title: "Planar formulae and their uses"
+    authors:
+      - "David Lichtenstein"
+    type: paper
+    id: "doi:10.1137/0211025"
+    location: "SIAM Journal on Computing 11(2) (1982), 329-343"
+    relationship: adapts
+    note: >-
+      NP-completeness of planar 3-SAT, with the incidence graph planar together with a cycle
+      through the variables, by laying out the formula on a grid and replacing crossings by
+      crossover gadgets. The reduction formalized here follows this plan (one column of
+      crossover cells per clause, applied to the Cook–Levin formulas), with its own gadgets
+      and layout, and planarity in the hypermap sense of Gonthier's Four Color proof.
+    author_endorsement: not-contacted
+  - title: "Formal Proof—The Four-Color Theorem"
+    authors:
+      - "Georges Gonthier"
+    type: paper
+    id: "https://www.ams.org/notices/200811/tx081101382p.pdf"
+    location: "Notices of the American Mathematical Society 55(11) (2008), 1382-1393"
+    relationship: background
+    note: >-
+      Source of the combinatorial definition of planarity used in the statement (hypermaps,
+      their Euler-formula genus, planarity as genus zero), as in Gonthier's Coq
+      development (hypermap.v).
+    author_endorsement: not-contacted
   - title: "Computers and Intractability: A Guide to the Theory of NP-Completeness"
     authors:
       - "Michael R. Garey"
@@ -164,7 +200,8 @@ related_formalizations:
       prior Lean 4 work. The present development is independent of it and uses neither
       Mathlib nor Complexitylib: its statement depends only on Lean core, and it uses a
       single-tape machine model with the 'at most three literals' convention for 3-SAT.
-      No prior formalization of (≤1,≤2)-SAT or of the binary-index variant was found.
+      No prior formalization of (≤1,≤2)-SAT, of the binary-index variant or of planar 3-SAT
+      was found.
   - id: "https://github.com/DominicBreuker/cook-levin-lean"
     relationship: independent
     note: >-
@@ -189,15 +226,16 @@ related_formalizations:
 
 status:
   scope: >-
-    Proved: the six compared theorems (NP-completeness of SAT, 3-SAT, exactly-3-SAT,
-    (≤1,≤2)-SAT and binary-index SAT, and the equality of NP with nondeterministic
-    polynomial time) for the definitions of Challenge.lean. On the way: NP membership of
+    Proved: the eight compared theorems (NP-completeness of SAT, 3-SAT, exactly-3-SAT,
+    (≤1,≤2)-SAT, binary-index SAT, planar 3-SAT and Lichtenstein's planar 3-SAT, and the
+    equality of NP with nondeterministic polynomial time) for the definitions of
+    Challenge.lean. On the way: NP membership of
     every language by explicit verifier machines, the Cook–Levin reduction from every NP
     language to SAT as a timed machine (InNP.polyRed_sat), reductions to 3-SAT,
     exactly-3-SAT and (≤1,≤2)-SAT for every NP language, a timed SAT-to-binary-SAT machine,
-    and the composition of polynomial-time machines (PolyRed.trans). The library also
-    defines planar 3-SAT (Planarity.lean, PlanarSAT.lean), whose NP-completeness is not yet
-    proved and is not part of the compared statement. Not included: invariance under other
+    reductions to both planar versions for every NP language, a planarity toolkit for
+    hypermaps (formulas drawn as combs; subdivision of edges), and the composition of
+    polynomial-time machines (PolyRed.trans). Not included: invariance under other
     machine models, DIMACS or other concrete file formats, and arbitrary propositional
     formulas.
   sorry_count: 0
@@ -226,6 +264,16 @@ status:
       comparator_config: comparator.json
     - declaration: Complexity.binarySAT_np_complete
       file: Complexity/BinarySATComplete.lean
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: comparator.json
+    - declaration: Complexity.planarThreeSAT_np_complete
+      file: Complexity/PlanarSATComplete.lean
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: comparator.json
+    - declaration: Complexity.cyclePlanarThreeSAT_np_complete
+      file: Complexity/PlanarSATComplete.lean
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
       comparator_config: comparator.json
@@ -279,8 +327,8 @@ automation:
     equivalent or checked by Comparator); added the lemmas this needed and a file of sanity
     checks; fixed the continuous integration and linter warnings; surveyed prior
     formalizations; and wrote this metadata and the documentation. It then stated the
-    variants (exactly-3-SAT, (≤1,≤2)-SAT, binary-index SAT, planar 3-SAT) and the
-    nondeterministic characterization, checked that every new definition elaborates
+    variants (exactly-3-SAT, (≤1,≤2)-SAT, binary-index SAT, planar 3-SAT in both versions)
+    and the nondeterministic characterization, checked that every new definition elaborates
     identically with Mathlib imported, and had subagents prove them (see the Claude Code
     method above). A human maintainer
     directed the work. README.md ("AI disclosure", "History of this repository") gives the
@@ -301,6 +349,8 @@ fidelity:
     - 3-SAT means at most three literals per clause, as in Karp (1972). Clauses with fewer literals, repeated literals, and empty clauses are allowed. Exactly-3-SAT requires exactly three literals per clause on three distinct variables (stronger than Garey and Johnson's exactly-three convention).
     - (≤1,≤2)-SAT counts occurrences over the whole formula, a repeated literal counting each time: every variable occurs at most once positively and at most twice negatively, and every clause has two or three literals.
     - The empty formula is true, and a formula containing an empty clause is false.
+    - Planarity is combinatorial (PlanarGraph): a graph, given by its list of edges (loops and repeated edges allowed, no isolated vertices), is planar when some hypermap on its half-edges, whose edge permutation pairs the ends of each edge and whose node cycles are the half-edges at each vertex, has genus 0 by Gonthier's Euler formula. This is the rotation-system definition; its equivalence with drawings in the plane is classical and is not proved here.
+    - The incidence graph has one edge per literal occurrence (a variable occurring twice in a clause gives two parallel edges). Lichtenstein's version adds the cycle through the variables 0, 1, ..., n - 1 in index order, n being one more than the largest variable, so variables that do not occur are on the cycle too.
 
 review:
   status: agent-reviewed
@@ -314,7 +364,7 @@ review:
     pinned toolchain v4.35.0-rc2: lake build (with an audit of all Complexity declarations
     for axioms), lake check, and lake comparator --paranoid, in which Lean's kernel,
     leanchecker-paranoid, lean4lean, NanoDa, con-leche and con-ron all accepted the proofs
-    of all six compared theorems. A mock downstream project whose Challenge imports Mathlib
+    of all eight compared theorems. A mock downstream project whose Challenge imports Mathlib
     (v4.35.0-rc2) and copies these definitions verbatim was also accepted by Comparator, so
     later entries can state NP-hardness results with these definitions. docs/VERIFICATION.md
     records these runs. No human has reviewed the mathematics.
@@ -358,6 +408,20 @@ alignment:
         In NP with one certificate bit per literal occurrence and a consistency check between
         occurrences of equal variables; NP-hard by a machine converting unary indices to
         binary (sat_polyRed_binarySAT).
+    - source: "Lichtenstein (1982): planar 3-SAT is NP-complete"
+      lean: "Complexity.planarThreeSAT_np_complete : NPComplete SAT.PlanarThreeSAT"
+      module: Solution
+      status: proved
+      note: >-
+        In NP with a planar embedding in the certificate; NP-hard by the grid formula with the
+        variable-cycle edges subdivided into clauses with fresh variables.
+    - source: "Lichtenstein (1982): planar 3-SAT with the variable cycle is NP-complete"
+      lean: "Complexity.cyclePlanarThreeSAT_np_complete : NPComplete SAT.CyclePlanarThreeSAT"
+      module: Solution
+      status: proved
+      note: >-
+        In NP with a planar embedding of the incidence graph plus variable cycle; NP-hard by the
+        grid formula, which is a comb formula and hence planar with its variable cycle.
     - source: "Arora and Barak (2009), Chapter 2: NP equals nondeterministic polynomial time"
       lean: "Complexity.inNP_iff_nondeterministicPolyTime : InNP L ↔ NondeterministicPolyTime L"
       module: Solution
@@ -366,6 +430,7 @@ alignment:
         Both directions are explicit machine constructions with step-counted running times.
 
 acknowledgements: >-
-  Stephen Cook, Leonid Levin, Richard Karp and Craig Tovey for the theorems; the authors of the earlier
+  Stephen Cook, Leonid Levin, Richard Karp, Craig Tovey and David Lichtenstein for the
+  theorems; Georges Gonthier for the hypermap definition of planarity; the authors of the earlier
   formalizations listed above; the Lean developers; and the authors of the checkers
   leanchecker, lean4lean, NanoDa, con-leche and con-ron.

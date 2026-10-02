@@ -1,17 +1,16 @@
 # NP-completeness of SAT and its variants: the Cook–Levin theorem in Lean 4
 
-A Lean 4 proof that **SAT, 3-SAT, exactly-3-SAT, (≤1,≤2)-SAT and SAT with binary variable
-indices are NP-complete**, and that **NP equals nondeterministic polynomial time**, for an
+A Lean 4 proof that **SAT, 3-SAT, exactly-3-SAT, (≤1,≤2)-SAT, SAT with binary variable
+indices, planar 3-SAT and Lichtenstein's planar 3-SAT are NP-complete**, and that **NP equals
+nondeterministic polynomial time**, for an
 explicit Turing-machine model, with every running time proved by counting machine steps. The development uses only Lean's
 core library (no Mathlib, no other package), and it is packaged for the
 [Palomar registry](https://palomar-registry.org/how-to-submit): the statement is the
 self-contained `Challenge.lean`, the proof is `Solution.lean`, and `comparator.json` tells
 Comparator to check that they agree.
 
-**Status.** All six compared theorems are proved; no Lean file of the proof contains `sorry`,
-and the proof depends only on the axioms `propext`, `Classical.choice` and `Quot.sound`. Planar
-3-SAT is defined in the library (`Planarity.lean`, `PlanarSAT.lean`) and its NP-completeness is
-in progress; it is not yet part of the compared statement. On the pinned Lean
+**Status.** All eight compared theorems are proved; no Lean file of the proof contains `sorry`,
+and the proof depends only on the axioms `propext`, `Classical.choice` and `Quot.sound`. On the pinned Lean
 release (v4.35.0-rc2), a rehearsal of Palomar's mechanical verification passes: `lake build`,
 `lake check`, and the sandboxed `lake comparator --paranoid`, in which Lean's kernel and the
 independent checkers leanchecker (paranoid mode), lean4lean, NanoDa, con-leche and con-ron all
@@ -38,18 +37,18 @@ This development was written by AI, under human direction.
   the nondeterministic characterization of NP, checked that every new definition elaborates
   identically when Mathlib is imported, and had separate Claude Opus 5.5 subagents prove them,
   each in its own git worktree (`Complexity/Restricted/`,
-  `Complexity/Binary/`, `Complexity/NTM/`, about 11,800 lines). Each result was reviewed
+  `Complexity/Binary/`, `Complexity/NTM/`, `Complexity/Planar/`, about 23,900 lines). Each result was reviewed
   (new files only, no forbidden constructs, standard axioms, clean build) before it was merged.
 * A human maintainer set the task and its constraints.
 
 No human has reviewed the mathematics. So please don't take the theorem on anyone's authority.
-The part a person has to read is the statement, `Challenge.lean`: 343 lines of elementary,
+The part a person has to read is the statement, `Challenge.lean`: 464 lines of elementary,
 documented definitions that import nothing but Lean core (see [What it proves](#what-it-proves)).
 Everything else is checked by machine, by Lean's kernel and by independently written checkers.
 
 ## What it proves
 
-`Challenge.lean` states the six theorems that Comparator checks, and `Solution.lean` proves
+`Challenge.lean` states the eight theorems that Comparator checks, and `Solution.lean` proves
 them:
 
 ```lean
@@ -58,6 +57,8 @@ theorem Complexity.threeSAT_np_complete : NPComplete SAT.ThreeSAT
 theorem Complexity.exactThreeSAT_np_complete : NPComplete SAT.ExactThreeSAT
 theorem Complexity.leOneLeTwoSAT_np_complete : NPComplete SAT.LeOneLeTwoSAT
 theorem Complexity.binarySAT_np_complete : NPComplete SAT.BinarySAT
+theorem Complexity.planarThreeSAT_np_complete : NPComplete SAT.PlanarThreeSAT
+theorem Complexity.cyclePlanarThreeSAT_np_complete : NPComplete SAT.CyclePlanarThreeSAT
 theorem Complexity.inNP_iff_nondeterministicPolyTime (L : Language) :
     InNP L ↔ NondeterministicPolyTime L
 ```
@@ -65,8 +66,10 @@ theorem Complexity.inNP_iff_nondeterministicPolyTime (L : Language) :
 In words: **SAT, the set of binary codes of satisfiable CNF formulas, is NP-complete, and so
 are 3-SAT (at most three literals per clause), exactly-3-SAT (exactly three literals per clause,
 on three distinct variables), (≤1,≤2)-SAT (two or three literals per clause, every variable
-occurring at most once positively and at most twice negatively), and SAT with variable indices
-written in binary. NP, defined by verifiers, is the class of languages accepted in polynomial
+occurring at most once positively and at most twice negatively), SAT with variable indices
+written in binary, planar 3-SAT (the variable–clause incidence graph is planar), and
+Lichtenstein's planar 3-SAT (planar even with a cycle through the variables). NP, defined by
+verifiers, is the class of languages accepted in polynomial
 time by nondeterministic machines.** NP-complete means: in NP, and every language in NP reduces
 to it by a polynomial-time many-one (Karp) reduction. The definitions, all in `Challenge.lean`:
 
@@ -97,6 +100,16 @@ to it by a polynomial-time many-one (Karp) reduction. The definitions, all in `C
   positively and at most twice negatively (`IsLeOneLeTwoCNF`). `SAT.BinarySAT` uses
   `encodeBinary`, which writes each variable index in binary (least significant digit first,
   leading zeros allowed) instead of unary.
+* **Planarity.** As in Gonthier's formal proof of the Four Color Theorem (Coq,
+  `hypermap.v`): a `Hypermap` is three functions `edge`, `node`, `face` on darts
+  `Fin n` with `node (face (edge x)) = x`; its genus comes from the Euler formula,
+  `(2·components + darts − (edges + nodes + faces)) / 2`, counted with `cycleCount` and
+  `componentCount`; `Planar` means genus 0. `PlanarGraph es` says that the graph with edge list
+  `es` has a planar embedding: a planar hypermap on its half-edges whose `edge` pairs the two
+  ends of each edge and whose `node` cycles are the half-edges at each vertex.
+  `SAT.PlanarThreeSAT` asks that the `incidenceGraph` of a 3-CNF formula (an edge between
+  variable `v` and clause `j` for each occurrence) be planar; `SAT.CyclePlanarThreeSAT` asks
+  the same of the incidence graph plus the `variableCycle` through variables `0, 1, …, n − 1`.
 * **Nondeterminism.** An `NMachine` has two transition tables and may follow either at each
   step; `NMachine.run` follows a list of choices. `NondeterministicPolyTime L`: some `NMachine`
   and polynomial `p` such that, on every input `x`, every computation path halts within `p(|x|)`
@@ -128,6 +141,11 @@ too.
   convention (exactly three literals on three distinct variables). The empty formula is true,
   and a formula with an empty clause is false. In (≤1,≤2)-SAT, occurrences are counted over
   the whole formula, a repeated literal counting each time.
+* **Combinatorial planarity.** Planarity is the rotation-system (genus-0 hypermap)
+  definition; its equivalence with drawings in the plane is classical and not proved here.
+  Graphs are given by edge lists, so loops and parallel edges are allowed (a variable occurring
+  twice in a clause gives two edges). In Lichtenstein's version the cycle runs through all
+  variables `0, …, n − 1` in index order, including any that do not occur.
 * **Output convention.** A computed function's output is read from the final head position,
   up to the first blank or separator.
 
@@ -172,6 +190,12 @@ leOneLeTwoSAT_np_complete             RestrictedSATComplete.lean
 binarySAT_np_complete                 BinarySATComplete.lean
 ├─ binarySAT_inNP                     Binary/VerifierMachine.lean       one bit per occurrence, consistency
 └─ sat_polyRed_binarySAT              Binary/ReductionSemantics.lean    unary-to-binary transducer
+planarThreeSAT_np_complete            PlanarSATComplete.lean
+├─ planarThreeSAT_inNP                Planar/VerifierMain.lean          embedding in the certificate
+└─ planarThreeSAT_npHard              Planar/Reduction.lean             grid formula, cycle edges subdivided
+cyclePlanarThreeSAT_np_complete       PlanarSATComplete.lean
+├─ cyclePlanarThreeSAT_inNP           Planar/VerifierMain.lean
+└─ cyclePlanarThreeSAT_npHard         Planar/Reduction.lean             grid formula (comb_planar)
 inNP_iff_nondeterministicPolyTime     NondeterministicEquiv.lean
 ├─ inNP_of_nondeterministicPolyTime   NTM/Verifier.lean                 simulate with choices from the certificate
 └─ nondeterministicPolyTime_of_inNP   NTM/Guesser.lean                  clock, guess, check
@@ -215,6 +239,17 @@ inNP_iff_nondeterministicPolyTime     NondeterministicEquiv.lean
   The verifier (`Binary/Verifier*`) takes one certificate bit per literal occurrence, checks
   that every clause has a true literal, and compares every pair of occurrences, requiring equal
   bits for equal variables (equal binary values, ignoring leading zeros).
+* **Planar 3-SAT.** The verifier (`Planar/Verifier*`, `EmbedCert`, `EmbedComplete`) reads,
+  besides an assignment, parsing tables for the input and a local description of an embedding;
+  local checks are proved to imply `PlanarGraph`. For hardness (`Planar/Grid*`, `Reduction`),
+  the Cook–Levin formula of any NP language is laid out as a grid formula in the style of
+  Lichtenstein: one column of crossover cells per clause along a spine, copies of each variable
+  joined between columns by nested two-literal clauses. `Planar/Comb*` proves that every formula
+  drawable as a comb (variables along the spine, clauses as legs) is planar with its variable
+  cycle (`comb_planar`), by computing the faces of an explicit rotation system; the plain
+  version replaces each cycle edge by a clause with a fresh variable, and `planar_subdivide`
+  shows that subdividing edges keeps a graph planar. Two composed clause emitters make the
+  reduction polynomial-time.
 * **Nondeterminism.** `NTM/Core` simulates any `NMachine` on stacks, reading its choices from a
   register. For one direction the verifier runs this simulation with the certificate as the
   choices; no step counter is needed, since every path halts in time. For the other, a
@@ -263,11 +298,11 @@ of date. Comparator, not the generator, is what establishes that the statements 
 
 | Path | Contents |
 | --- | --- |
-| `Challenge.lean` | The statement: definitions and the six theorems, with `sorry`. |
-| `Solution.lean` | Imports the proofs of the six theorems. |
+| `Challenge.lean` | The statement: definitions and the eight theorems, with `sorry`. |
+| `Solution.lean` | Imports the proofs of the eight theorems. |
 | `comparator.json` | The Comparator configuration Palomar uses. |
 | `formalization.yaml` | Palomar metadata: sources, authorship, AI use, review, limitations. |
-| `Complexity/` | The library: 117 modules, about 29,000 lines (machine model, classes, SAT, compilers, tableau, reductions; `Restricted/`, `Binary/` and `NTM/` for the further theorems; `Planarity.lean` and `PlanarSAT.lean` for planar 3-SAT). |
+| `Complexity/` | The library: 146 modules, about 41,000 lines (machine model, classes, SAT, compilers, tableau, reductions; `Restricted/`, `Binary/`, `NTM/` and `Planar/` for the further theorems; `Planarity.lean` and `PlanarSAT.lean` define planarity and planar 3-SAT). |
 | `Complexity.lean` | Imports the whole library. |
 | `Audit.lean` | Fails the build if a `Complexity` declaration uses a nonstandard axiom. |
 | `Examples/` | `Sanity.lean` (tests of the definitions) and `Downstream.lean` (using the results). |
@@ -280,7 +315,7 @@ of date. Comparator, not the generator, is what establishes that the statements 
 
 Import `Complexity`. To prove a new language `L` NP-complete, give `InNP L` and a reduction
 to `L` from any of the NP-complete languages here (SAT, 3-SAT, exactly-3-SAT, (≤1,≤2)-SAT,
-binary SAT), and apply `NPComplete.of_reduction` (or `npComplete_of_sat_reduction`,
+binary SAT, both planar versions), and apply `NPComplete.of_reduction` (or `npComplete_of_sat_reduction`,
 `npComplete_of_threeSAT_reduction`); `PolyRed.trans` composes reductions, and
 `InNP.polyRed_sat` gives the Cook–Levin reduction from any NP language.
 [docs/FOUNDATION.md](docs/FOUNDATION.md) explains the machine-programming API (stack machines
@@ -329,7 +364,7 @@ its logically defined NP to acceptance by nondeterministic machines. A search fo
 formalization of (≤1,≤2)-SAT, of the binary-index variant, or of planar 3-SAT.
 
 What distinguishes this one: the statement needs nothing beyond Lean core, so it can be audited
-in one 343-line file; it uses a single-tape model and proves every running time, including that
+in one 464-line file; it uses a single-tape model and proves every running time, including that
 of the Cook–Levin reduction itself, by counting the steps of an actual machine; and it is
 prepared for checking by Palomar's Comparator pipeline.
 
@@ -358,5 +393,5 @@ Apache License 2.0.
 * Later commits, by Claude Opus 5.5 and its subagents: `powerBound` written with `Nat.pow` so
   that the definitions elaborate identically when Mathlib is imported (checked with a mock
   downstream project); the definitions of the variants of SAT, of planar 3-SAT and of
-  nondeterministic machines; and the proofs of the four further compared theorems, each merged
-  as one commit after review.
+  nondeterministic machines; the proofs of the six further compared theorems, each merged as
+  one commit after review; and a compression of the Challenge's layout and docstrings.

@@ -12,13 +12,13 @@ the command below; documentation changes do not affect it):
 ```sh
 git ls-files -- '*.lean' lakefile.toml lake-manifest.json lean-toolchain comparator.json \
   | sort | xargs sha256sum | sha256sum
-# 12e8b9258f66ed995e751ba6096a6734a84ecec92bac115d41f73ddf75cb4fca
+# 7ac5d33374427d4149d35288740b6c49dbabc2fcb88fe0811b3dd37d970aa2f0
 ```
 
 | File | SHA-256 |
 | --- | --- |
-| `Challenge.lean` (343 lines, 14,161 bytes) | `a333670d358c3522e3b82a5cc2fbb58096f9f89ef653ded085786b34a73a7d50` |
-| `Solution.lean` | `172a6069e8673ee9c52bbe4784e28d4587a205bf71e7fdc7f770dc99cda30066` |
+| `Challenge.lean` (464 lines, 19,509 bytes) | `9ac53982033a1ac805af6e1b2f9668a3f03fa6585f7b4fff5225f846c7d25d1b` |
+| `Solution.lean` | `2121d213a5df53ebf279da116a461b02efb81ed60a23776187ae2feb1230d2b5` |
 | `comparator.json` | `db99bcc8c7f56c725b8eaf07d921b810904be439174f28756e6c448b24302bc3` |
 
 ## Tools
@@ -47,21 +47,21 @@ of these tools were used.
 | Step | Command | Result |
 | --- | --- | --- |
 | Preflight | `python3 scripts/check_submission.py` | passed |
-| Build | `lake build` | 127 jobs, no errors and no warnings; `Audit.lean`: 5,490 `Complexity` declarations use only `propext`, `Classical.choice`, `Quot.sound` |
-| Statement | `lake build Challenge` | builds; the only warnings are the six deliberate `sorry`s |
+| Build | `lake build` | 156 jobs, no errors and no warnings; `Audit.lean`: 7,211 `Complexity` declarations use only `propext`, `Classical.choice`, `Quot.sound` |
+| Statement | `lake build Challenge` | builds; the only warnings are the eight deliberate `sorry`s |
 | Replay | `lake check` | Lean's kernel accepts the solution; axioms `propext`, `Quot.sound`, `Classical.choice` |
 | Comparator | `lake comparator --config comparator.json --paranoid` | "Your solution is okay!" |
 
 In the Comparator run, which builds and exports both modules inside the bubblewrap sandbox
 without network access, these kernels each accepted the exported proof of both theorems:
 NanoDa, Lean's kernel in paranoid mode (`leanchecker-paranoid`), lean4lean, con-leche, con-ron,
-and Lean's default kernel. This covers all six compared theorems: NP-completeness of SAT, 3-SAT,
-exactly-3-SAT, (≤1,≤2)-SAT and binary-index SAT, and `inNP_iff_nondeterministicPolyTime`. The
-whole run took about seven minutes. Comparator's default mode (NanoDa and
+and Lean's default kernel. This covers all eight compared theorems: NP-completeness of SAT,
+3-SAT, exactly-3-SAT, (≤1,≤2)-SAT, binary-index SAT, planar 3-SAT and Lichtenstein's planar
+3-SAT, and `inNP_iff_nondeterministicPolyTime`. The whole run took about eleven minutes. Comparator's default mode (NanoDa and
 Lean's kernel, as Palomar runs it) also passed, both on the delivered sources and on the revised
 statement.
 
-`#print axioms` prints `[propext, Classical.choice, Quot.sound]` for each of the six compared
+`#print axioms` prints `[propext, Classical.choice, Quot.sound]` for each of the eight compared
 theorems.
 
 ## Continuous integration
@@ -85,11 +85,11 @@ with Mathlib imported, `(n + 1) ^ k` on `Nat` elaborates through Mathlib's monoi
 `c * Nat.pow (n + 1) k`, all definitions elaborate identically, and `lake comparator` on the
 mock project prints "Your solution is okay!".
 
-The test was repeated for the six-theorem statement: a Challenge importing all of Mathlib
-copies the whole definition block of `Challenge.lean` verbatim and states the NP-completeness of
-exactly-3-SAT, (≤1,≤2)-SAT and binary-index SAT, the NP-hardness of 3-SAT, and
-`InNP L ↔ NondeterministicPolyTime L`; its Solution proves them from the library, and Comparator
-accepts.
+The test was repeated for the final statement: a Challenge importing all of Mathlib copies the
+whole definition block of `Challenge.lean` verbatim (including the hypermap definitions of
+planarity) and states the NP-completeness of exactly-3-SAT, (≤1,≤2)-SAT, binary-index SAT and
+both planar versions, the NP-hardness of 3-SAT, and `InNP L ↔ NondeterministicPolyTime L`; its
+Solution proves them from the library, and Comparator accepts.
 
 ## Reproducing
 

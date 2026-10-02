@@ -136,9 +136,10 @@ public import Init
 
 For one machine model and concrete binary codes of CNF formulas, the theorems at the end
 state that SAT, 3-SAT (at most three literals per clause), exactly-3-SAT (exactly three, on
-distinct variables), (≤1,≤2)-SAT and SAT with binary variable indices are NP-complete: in NP,
-and every language in NP reduces to them by a polynomial-time many-one reduction. A last
-theorem states that NP, defined by verifiers, is nondeterministic polynomial time.
+distinct variables), (≤1,≤2)-SAT, SAT with binary variable indices, planar 3-SAT and
+Lichtenstein's planar 3-SAT are NP-complete: in NP, and every language in NP reduces to them
+by a polynomial-time many-one reduction. A last theorem states that NP, defined by verifiers,
+is nondeterministic polynomial time.
 
 * Machines: deterministic single-tape Turing machines over {blank, 0, 1, separator}; time is
   the number of steps, the halting step included. `NMachine` has two transition tables.
@@ -147,6 +148,9 @@ theorem states that NP, defined by verifiers, is nondeterministic polynomial tim
 * Formulas: variables are natural numbers, a clause is a list of literals, a formula a list
   of clauses. `encode` writes indices and lengths in unary, `encodeBinary` indices in binary.
   Words coding no formula belong to none of the languages.
+* Planarity follows Gonthier's Four Color proof: a hypermap is planar when its genus, from the
+  Euler formula, is zero; a graph is planar when some planar hypermap on its half-edges
+  embeds it. Planar 3-SAT asks this of the variable–clause incidence graph.
 
 Only Lean core is imported. `scripts/generate_challenge.py` generates this file from the
 library; `Solution.lean` proves the theorems without importing it.
@@ -184,6 +188,19 @@ namespace Complexity
             "encodeBinary", "BinarySAT",
         ]),
         "end Complexity.SAT\n\nnamespace Complexity",
+        declarations("Complexity/Planarity.lean", ["iterate", "Hypermap", "cycleCount"]),
+        "namespace Hypermap",
+        declarations("Complexity/Planarity.lean", [
+            "linked", "componentCount", "eulerLhs", "eulerRhs", "genus", "Planar",
+        ]),
+        "end Hypermap",
+        declarations("Complexity/Planarity.lean", ["halfEdgeEnd", "PlanarGraph"]),
+        "end Complexity\n\nnamespace Complexity.SAT",
+        declarations("Complexity/PlanarSAT.lean", [
+            "incidenceGraph", "variableCount", "variableCycle", "IsPlanarThreeCNF",
+            "PlanarThreeSAT", "IsCyclePlanarThreeCNF", "CyclePlanarThreeSAT",
+        ]),
+        "end Complexity.SAT\n\nnamespace Complexity",
         declarations("Complexity/Nondeterministic.lean", [
             "NMachine", "NMachine.run", "NondeterministicPolyTime",
         ]),
@@ -201,6 +218,12 @@ theorem leOneLeTwoSAT_np_complete : NPComplete SAT.LeOneLeTwoSAT := by sorry
 
 /-- SAT with binary variable indices is NP-complete. -/
 theorem binarySAT_np_complete : NPComplete SAT.BinarySAT := by sorry
+
+/-- Planar 3-SAT is NP-complete. -/
+theorem planarThreeSAT_np_complete : NPComplete SAT.PlanarThreeSAT := by sorry
+
+/-- Lichtenstein's planar 3-SAT, with the cycle through the variables, is NP-complete. -/
+theorem cyclePlanarThreeSAT_np_complete : NPComplete SAT.CyclePlanarThreeSAT := by sorry
 
 /-- NP, defined by verifiers, is nondeterministic polynomial time. -/
 theorem inNP_iff_nondeterministicPolyTime (L : Language) :
