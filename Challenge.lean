@@ -150,9 +150,10 @@ abbrev Word := List Bool
 abbrev Language := Word → Prop
 
 /-- The bound `c * (n + 1) ^ k`. Every polynomial in `n` with natural coefficients
-is at most such a bound, so these bounds express polynomial time and length. -/
+is at most such a bound, so these bounds express polynomial time and length.
+`Nat.pow` is written out so that this term is the same when Mathlib is imported. -/
 def powerBound (coefficient exponent inputSize : Nat) : Nat :=
-  coefficient * (inputSize + 1) ^ exponent
+  coefficient * Nat.pow (inputSize + 1) exponent
 
 /-- The pair `(x, y)` as one word: `|x|` ones, a zero, then `x` and `y`. A
 verifier for NP receives an instance `x` and a certificate `y` this way. -/

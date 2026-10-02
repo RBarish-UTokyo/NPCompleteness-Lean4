@@ -12,12 +12,12 @@ the command below; documentation changes do not affect it):
 ```sh
 git ls-files -- '*.lean' lakefile.toml lake-manifest.json lean-toolchain comparator.json \
   | sort | xargs sha256sum | sha256sum
-# 854d7cb85b312a08b46c17a90dfabda7b6a9caf134da2eca617aaa9cc13f6043
+# b6ce2daf7b01e731c15294f0a65f46d54767406dc6d3216aac8b5a6e5d65453b
 ```
 
 | File | SHA-256 |
 | --- | --- |
-| `Challenge.lean` (299 lines, 11,398 bytes) | `38c876f77d83e046106118d244c5e976abebf83d7e70ee1b7309e46f45e6a880` |
+| `Challenge.lean` (300 lines, 11,485 bytes) | `216993eec75eec83c91426d1dbc1b060f531906824aa1571e8b7595b5b7ec6ec` |
 | `Solution.lean` | `c54cd2debf579c282a7cc334cad1350b27fb63a5bda67001145fba271c5c02f7` |
 | `comparator.json` | `7e9fb5af786eb1502d18983d4b14685409dca3849b38f7ce7a15a5f2eefa2145` |
 
@@ -64,9 +64,25 @@ both print `[propext, Classical.choice, Quot.sound]`.
 
 ## Continuous integration
 
-The workflow `.github/workflows/verify.yml` ran the same steps on GitHub's `ubuntu-22.04`
-runner, on sources with the fingerprint above: preflight, `lake build`, `lake build Challenge`,
-`lake check`, and `lake comparator --paranoid` all passed, ending with "Your solution is okay!".
+The workflow `.github/workflows/verify.yml` runs the same steps on GitHub's `ubuntu-22.04`
+runner. It passed on an earlier revision of these sources (before `powerBound` was rewritten
+with `Nat.pow`, below), ending with "Your solution is okay!".
+
+## Downstream reuse with Mathlib
+
+A mock downstream project checked that later Palomar entries can reuse the statement. Its
+Lakefile requires Mathlib at tag v4.35.0-rc2 and this repository as a contained path
+dependency. Its `Challenge.lean` imports all of Mathlib, copies the definitions of this
+`Challenge.lean` verbatim, defines a language with a Mathlib notion (`Even`), and states two
+theorems with `sorry`: that 3-SAT is NP-hard, and a reduction involving the new language. Its
+`Solution.lean` imports Mathlib and `Complexity` and proves both from the library.
+
+The first attempt failed: Comparator reported that `Complexity.PolyRed` did not match. Printing
+the elaborated definitions with and without Mathlib showed that only `powerBound` differed:
+with Mathlib imported, `(n + 1) ^ k` on `Nat` elaborates through Mathlib's monoid instance
+(`Monoid.toNPow`) instead of core's `instPowNat`. With `powerBound` written as
+`c * Nat.pow (n + 1) k`, all definitions elaborate identically, and `lake comparator` on the
+mock project prints "Your solution is okay!".
 
 ## Reproducing
 

@@ -35,7 +35,7 @@ This development was written by AI, under human direction.
 * A human maintainer set the task and its constraints.
 
 No human has reviewed the mathematics. So please don't take the theorem on anyone's authority.
-The part a person has to read is the statement, `Challenge.lean`: 299 lines of elementary,
+The part a person has to read is the statement, `Challenge.lean`: 300 lines of elementary,
 documented definitions that import nothing but Lean core (see [What it proves](#what-it-proves)).
 Everything else is checked by machine, by Lean's kernel and by independently written checkers.
 
@@ -216,8 +216,19 @@ from SAT or 3-SAT to `L`, and apply `npComplete_of_sat_reduction` or
 `InNP.polyRed_sat` gives the Cook–Levin reduction from any NP language.
 [docs/FOUNDATION.md](docs/FOUNDATION.md) explains the machine-programming API (stack machines
 and their compiler) used to prove running times, and `Examples/Downstream.lean` has checked
-examples. A Palomar entry fixes a snapshot of its own statement; it does not make this
-repository an allowed dependency of other Challenges, which must inline the definitions they use.
+examples.
+
+**Downstream Palomar entries.** A Palomar Challenge may import only Lean core and the
+allowlisted Mathlib, Tau Ceti or CSLib, and a registered entry does not become an allowed
+import. A later entry claiming that some problem is NP-hard or NP-complete therefore copies the
+definitions it needs from `Challenge.lean` verbatim (for `NPHard`/`NPComplete` statements,
+everything up to `NPComplete`; the SAT definitions only if its statement mentions SAT), and its
+Solution imports this repository, pinned at a commit, to use `threeSAT_np_hard`, `PolyRed.trans`
+and the machine-programming API. Comparator then checks that the copied definitions are exactly
+the library's. This has been tested with a Challenge importing all of Mathlib (v4.35.0-rc2):
+Comparator accepts. That is why `powerBound` writes `Nat.pow` rather than `^`: with Mathlib
+imported, `^` on `Nat` elaborates through Mathlib's monoid structure, a different term.
+[docs/FOUNDATION.md](docs/FOUNDATION.md) describes the procedure.
 
 ## Other formalizations
 
@@ -244,7 +255,7 @@ no priority. It is independent of all of them and uses none of their code.
   the translation of machine computations to SAT, without complexity classes.
 
 What distinguishes this one: the statement needs nothing beyond Lean core, so it can be audited
-in one 299-line file; it uses a single-tape model and proves every running time, including that
+in one 300-line file; it uses a single-tape model and proves every running time, including that
 of the Cook–Levin reduction itself, by counting the steps of an actual machine; and it is
 prepared for checking by Palomar's Comparator pipeline.
 

@@ -65,8 +65,7 @@ theorem pair_size_power_bound (wc wk n : Nat) :
     Nat.pow_le_pow_right (by omega) (by omega)
   have hn : n + 1 ≤ (n + 1) ^ (wk + 1) := Nat.le_pow (by omega)
   have hmul := Nat.mul_le_mul_left wc hpow
-  unfold powerBound
-  rw [Nat.add_mul]
+  rw [powerBound_eq, Nat.add_mul]
   omega
 
 /-- An explicit monomial dominating the verifier horizon; no polynomial
@@ -76,7 +75,7 @@ theorem verifierClock_le_powerBound (tc tk wc wk n : Nat) :
       powerBound (tc * (wc + 4) ^ tk) ((wk + 1) * tk) n := by
   have hp := Nat.pow_le_pow_left (pair_size_power_bound wc wk n) tk
   have hm := Nat.mul_le_mul_left tc hp
-  simpa [verifierClock, powerBound, Nat.mul_pow, Nat.pow_mul, Nat.mul_assoc] using hm
+  simpa [verifierClock, powerBound_eq, Nat.mul_pow, Nat.pow_mul, Nat.mul_assoc] using hm
 
 /-- Every NP language has a single explicit polynomial clock in the instance
 length for all its bounded certificates. This is a preparation lemma for the
@@ -116,7 +115,7 @@ theorem polyTime_output_length {f : Word → Word} (hf : PolyTime f) :
   have hn : input.length + 1 ≤ (input.length + 1) ^ (k + 1) := Nat.le_pow (by omega)
   have hc := Nat.mul_le_mul_left c hp
   rw [ho] at hs
-  simp only [powerBound] at ht ⊢
+  simp only [powerBound_eq] at ht ⊢
   rw [Nat.add_mul, Nat.one_mul, Nat.mul_assoc]
   omega
 

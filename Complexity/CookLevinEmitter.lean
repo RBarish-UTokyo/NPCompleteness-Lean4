@@ -60,7 +60,7 @@ def boundExpr (coefficient exponent : Nat) : NumExpr 1 :=
 
 @[simp] theorem eval_boundExpr (coefficient exponent : Nat) (env : Env 1) :
     (boundExpr coefficient exponent).eval env = powerBound coefficient exponent (env 0) := by
-  simp [boundExpr, NumExpr.eval, powerBound]
+  simp [boundExpr, NumExpr.eval, powerBound_eq]
 
 def widthExpr (wc wk rc rk : Nat) : NumExpr 1 :=
   (2 * .var 0 + 1) + boundExpr wc wk + 2 * boundExpr rc rk + 1

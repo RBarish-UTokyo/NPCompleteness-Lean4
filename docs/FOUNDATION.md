@@ -142,17 +142,42 @@ quantifies over the explicit `InNP` definition.
 
 ## Reusing the result in a Palomar submission
 
-Ordinary Lean reuse and Challenge admissibility are separate matters. A pinned
-Solution may import this foundation. A downstream Challenge must obey the
-current transitive statement-import policy; prior registration alone grants
-no dependency permission. Inline the necessary concrete definitions, and run
-Comparator against the proved Solution. Copying the theorem names or making
-the Challenge's definitions opaque does not establish matching statements.
+Ordinary Lean reuse and Challenge admissibility are separate matters. A
+Palomar Challenge may import only Lean core and the allowlisted Mathlib, Tau
+Ceti or CSLib; a registered entry, this one included, is not an allowed import.
+So a downstream entry that states "`L` is NP-hard" or "`L` is NP-complete"
+works as follows.
 
-The supplied Challenge generator targets this project's declarations. It is
-not a general generator for downstream languages. Reuse its extraction approach
-only after reviewing the resulting mathematical statement and checking every
-dependency that occurs in the theorem types. See the
+1. **Challenge.** Import what the new language needs (Mathlib, say), and copy
+   from this repository's `Challenge.lean`, *verbatim and in the same order*,
+   the declarations the statement uses: for `NPHard L` or `NPComplete L`, the
+   block from `Symbol` through `NPComplete` (the machine model and the classes);
+   add the `Complexity.SAT` block only if the statement itself mentions SAT.
+   Keep the names, the namespaces and the order: Lean names auxiliary
+   declarations (such as the matcher shared by `step` and `run`) after the
+   first declaration that needs them, and Comparator compares those too. Then
+   define the new language and state the theorem with `sorry`.
+2. **Solution.** Require this repository in the Lakefile, pinned to a full
+   commit SHA, `import Complexity`, define the language identically, and prove
+   the theorem, typically as
+   `npComplete_of_threeSAT_reduction hmem hred` with `hmem : InNP L` and
+   `hred : PolyRed SAT.ThreeSAT L`.
+3. **Check.** Run `lake comparator`. It rejects the submission unless every
+   copied definition is the same term as the library's.
+
+This was tested with a Challenge that imports all of Mathlib (at tag
+v4.35.0-rc2) and a Solution that requires this repository: Comparator accepts.
+The only definition that needed care is `powerBound`, written with `Nat.pow`:
+with Mathlib imported, `x ^ k` on `Nat` elaborates through Mathlib's monoid
+instance instead of core's `instPowNat`, a different term. All other
+definitions elaborate identically with and without Mathlib. The library and
+the downstream project must use the same Lean release, which for a Mathlib
+project is the one Mathlib pins; the library uses only Lean core, so moving it
+to a newer release should need few changes, but each move must be rechecked.
+
+Copying the theorem names or making the Challenge's definitions opaque does not
+establish matching statements. `scripts/generate_challenge.py` targets this
+project's declarations; see the
 [current submission rules](https://palomar-registry.org/how-to-submit).
 
 Keep proof checking, independent replay, statement comparison, and human review

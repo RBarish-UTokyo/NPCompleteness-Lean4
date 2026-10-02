@@ -11,7 +11,7 @@ maintainer. This page lists what remains and what submitting publishes.
 | `lean-toolchain` names a supported release (minimum v4.35.0-rc2) | `leanprover/lean4:v4.35.0-rc2` |
 | Exactly one Lakefile, committed `lake-manifest.json` | `lakefile.toml`; no dependencies |
 | Every Lean file uses `module`, at most 10,000 lines | checked by `scripts/check_submission.py` |
-| Challenge at most 1,000 lines and 100 KiB (warning above 300 lines or 32 KiB) | 299 lines, about 11 KiB |
+| Challenge at most 1,000 lines and 100 KiB (warning above 300 lines or 32 KiB) | 300 lines, about 11 KiB |
 | Challenge imports only Lean core, Mathlib, Tau Ceti or CSLib | `Init` only |
 | `comparator.json` with the accepted keys and axioms | two theorems; `propext`, `Quot.sound`, `Classical.choice` |
 | Exactly one licence file, matching `project.license` | `LICENSE`, Apache-2.0 |

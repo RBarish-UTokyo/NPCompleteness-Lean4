@@ -43,7 +43,7 @@ theorem sat_inNP : InNP SAT.SAT := by
   · intro h
     obtain ⟨certificate, hlen, hverify⟩ := SATVerifier.verify_complete h
     refine ⟨certificate, ?_, (satVerifier_accepts_iff input certificate).mpr hverify⟩
-    simpa [powerBound] using Nat.le_trans hlen (Nat.le_succ input.length)
+    simpa [powerBound_eq] using Nat.le_trans hlen (Nat.le_succ input.length)
   · rintro ⟨certificate, _, haccept⟩
     exact SATVerifier.verify_sound ((satVerifier_accepts_iff input certificate).mp haccept)
 
@@ -74,7 +74,7 @@ theorem threeSAT_inNP : InNP SAT.ThreeSAT := by
   · intro h
     obtain ⟨certificate, hlen, hverify⟩ := SATVerifier.verifyThree_complete h
     refine ⟨certificate, ?_, (threeSATVerifier_accepts_iff input certificate).mpr hverify⟩
-    simpa [powerBound] using Nat.le_trans hlen (Nat.le_succ input.length)
+    simpa [powerBound_eq] using Nat.le_trans hlen (Nat.le_succ input.length)
   · rintro ⟨certificate, _, haccept⟩
     exact SATVerifier.verifyThree_sound ((threeSATVerifier_accepts_iff input certificate).mp haccept)
 

@@ -239,8 +239,10 @@ review:
     pinned toolchain v4.35.0-rc2: lake build (with an audit of all Complexity declarations
     for axioms), lake check, and lake comparator --paranoid, in which Lean's kernel,
     leanchecker-paranoid, lean4lean, NanoDa, con-leche and con-ron all accepted the proofs
-    of both compared theorems. docs/VERIFICATION.md records these runs. No human has
-    reviewed the mathematics.
+    of both compared theorems. A mock downstream project whose Challenge imports Mathlib
+    (v4.35.0-rc2) and copies these definitions verbatim was also accepted by Comparator, so
+    later entries can state NP-hardness results with these definitions. docs/VERIFICATION.md
+    records these runs. No human has reviewed the mathematics.
 
 alignment:
   namespace: Complexity
