@@ -161,7 +161,13 @@ works as follows.
    commit SHA, `import Complexity`, define the language identically, and prove
    the theorem, typically as
    `npComplete_of_threeSAT_reduction hmem hred` with `hmem : InNP L` and
-   `hred : PolyRed SAT.ThreeSAT L`.
+   `hred : PolyRed SAT.ThreeSAT L`, or with `NPComplete.of_reduction` from one of
+   the other NP-complete languages here (`exactThreeSAT_np_complete`,
+   `leOneLeTwoSAT_np_complete`, `binarySAT_np_complete`), whichever makes the
+   reduction easiest. `Restricted.polyRed_exactThreeSAT` and
+   `Restricted.polyRed_leOneLeTwoSAT` give reductions from every NP language
+   directly, and `inNP_iff_nondeterministicPolyTime` lets membership be shown
+   with a nondeterministic machine instead of a verifier.
 3. **Check.** Run `lake comparator`. It rejects the submission unless every
    copied definition is the same term as the library's.
 

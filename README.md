@@ -1,14 +1,17 @@
-# SAT and 3-SAT are NP-complete: the Cook–Levin theorem in Lean 4
+# NP-completeness of SAT and its variants: the Cook–Levin theorem in Lean 4
 
-A Lean 4 proof that **SAT and 3-SAT are NP-complete**, for an explicit Turing-machine model,
-with every running time proved by counting machine steps. The development uses only Lean's
+A Lean 4 proof that **SAT, 3-SAT, exactly-3-SAT, (≤1,≤2)-SAT and SAT with binary variable
+indices are NP-complete**, and that **NP equals nondeterministic polynomial time**, for an
+explicit Turing-machine model, with every running time proved by counting machine steps. The development uses only Lean's
 core library (no Mathlib, no other package), and it is packaged for the
 [Palomar registry](https://palomar-registry.org/how-to-submit): the statement is the
 self-contained `Challenge.lean`, the proof is `Solution.lean`, and `comparator.json` tells
 Comparator to check that they agree.
 
-**Status.** Both theorems are proved; no Lean file of the proof contains `sorry`, and the proof
-depends only on the axioms `propext`, `Classical.choice` and `Quot.sound`. On the pinned Lean
+**Status.** All six compared theorems are proved; no Lean file of the proof contains `sorry`,
+and the proof depends only on the axioms `propext`, `Classical.choice` and `Quot.sound`. Planar
+3-SAT is defined in the library (`Planarity.lean`, `PlanarSAT.lean`) and its NP-completeness is
+in progress; it is not yet part of the compared statement. On the pinned Lean
 release (v4.35.0-rc2), a rehearsal of Palomar's mechanical verification passes: `lake build`,
 `lake check`, and the sandboxed `lake comparator --paranoid`, in which Lean's kernel and the
 independent checkers leanchecker (paranoid mode), lean4lean, NanoDa, con-leche and con-ron all
@@ -31,28 +34,41 @@ This development was written by AI, under human direction.
   3-SAT defined as images of the encoder instead of through a parser, unused definitions dropped
   from the Challenge), with the lemmas they needed; the sanity checks in
   `Examples/Sanity.lean`; fixes to the CI workflow and linter warnings; the survey of earlier
-  formalizations; the metadata and this documentation.
+  formalizations; the metadata and this documentation. It then stated the variants of SAT and
+  the nondeterministic characterization of NP, checked that every new definition elaborates
+  identically when Mathlib is imported, and had separate Claude Opus 5.5 subagents prove them,
+  each in its own git worktree (`Complexity/Restricted/`,
+  `Complexity/Binary/`, `Complexity/NTM/`, about 11,800 lines). Each result was reviewed
+  (new files only, no forbidden constructs, standard axioms, clean build) before it was merged.
 * A human maintainer set the task and its constraints.
 
 No human has reviewed the mathematics. So please don't take the theorem on anyone's authority.
-The part a person has to read is the statement, `Challenge.lean`: 300 lines of elementary,
+The part a person has to read is the statement, `Challenge.lean`: 410 lines of elementary,
 documented definitions that import nothing but Lean core (see [What it proves](#what-it-proves)).
 Everything else is checked by machine, by Lean's kernel and by independently written checkers.
 
 ## What it proves
 
-`Challenge.lean` states the two theorems that Comparator checks, and `Solution.lean` proves
+`Challenge.lean` states the six theorems that Comparator checks, and `Solution.lean` proves
 them:
 
 ```lean
 theorem Complexity.sat_np_complete : NPComplete SAT.SAT
 theorem Complexity.threeSAT_np_complete : NPComplete SAT.ThreeSAT
+theorem Complexity.exactThreeSAT_np_complete : NPComplete SAT.ExactThreeSAT
+theorem Complexity.leOneLeTwoSAT_np_complete : NPComplete SAT.LeOneLeTwoSAT
+theorem Complexity.binarySAT_np_complete : NPComplete SAT.BinarySAT
+theorem Complexity.inNP_iff_nondeterministicPolyTime (L : Language) :
+    InNP L ↔ NondeterministicPolyTime L
 ```
 
-In words: **SAT, the set of binary codes of satisfiable CNF formulas, is NP-complete, and so is
-3-SAT, the set of codes of satisfiable CNF formulas with at most three literals per clause.**
-NP-complete means: in NP, and every language in NP reduces to it by a polynomial-time
-many-one (Karp) reduction. The definitions, all in `Challenge.lean`:
+In words: **SAT, the set of binary codes of satisfiable CNF formulas, is NP-complete, and so
+are 3-SAT (at most three literals per clause), exactly-3-SAT (exactly three literals per clause,
+on three distinct variables), (≤1,≤2)-SAT (two or three literals per clause, every variable
+occurring at most once positively and at most twice negatively), and SAT with variable indices
+written in binary. NP, defined by verifiers, is the class of languages accepted in polynomial
+time by nondeterministic machines.** NP-complete means: in NP, and every language in NP reduces
+to it by a polynomial-time many-one (Karp) reduction. The definitions, all in `Challenge.lean`:
 
 * **Machines.** A `Machine` is a deterministic Turing machine with one two-way infinite tape over
   the alphabet {blank, 0, 1, separator} and finitely many control states. For each control state
@@ -75,6 +91,16 @@ many-one (Karp) reduction. The definitions, all in `Challenge.lean`:
   conjunction). `SAT.encode` codes a formula as a binary word: list lengths and variable indices
   in unary, a literal's sign as one bit. `SAT.SAT` is the set of words `encode f` with `f`
   satisfiable; `SAT.ThreeSAT` adds that every clause of `f` has at most three literals.
+* **Variants.** `SAT.ExactThreeSAT` requires every clause to have exactly three literals, on
+  three distinct variables (`IsExactThreeCNF`). `SAT.LeOneLeTwoSAT` requires every clause to
+  have two or three literals and every variable to occur in the whole formula at most once
+  positively and at most twice negatively (`IsLeOneLeTwoCNF`). `SAT.BinarySAT` uses
+  `encodeBinary`, which writes each variable index in binary (least significant digit first,
+  leading zeros allowed) instead of unary.
+* **Nondeterminism.** An `NMachine` has two transition tables and may follow either at each
+  step; `NMachine.run` follows a list of choices. `NondeterministicPolyTime L`: some `NMachine`
+  and polynomial `p` such that, on every input `x`, every computation path halts within `p(|x|)`
+  steps, and `x ∈ L` iff some path halts with decision `true` (Arora and Barak's definition).
 
 ### Conventions and limitations
 
@@ -84,19 +110,24 @@ too.
 * **NP by verifiers.** NP is defined by deterministic verifiers and polynomially bounded
   certificates, as in Arora and Barak (*Computational Complexity: A Modern Approach*, ch. 2),
   except that certificates have length *at most* `p(|x|)` rather than exactly (an equivalent
-  choice). The equivalence with nondeterministic machines is a standard theorem that is **not**
-  proved here, nor is the invariance of P and NP under other machine models (multi-tape machines,
-  RAMs).
+  choice). Its equivalence with nondeterministic machines is proved
+  (`inNP_iff_nondeterministicPolyTime`), for machines with two transition tables; the
+  invariance of P and NP under other machine models (multi-tape machines, RAMs) is **not**
+  proved here.
 * **Karp reductions.** Cook's 1971 paper used polynomial-time Turing reductions; the many-one
   form proved here is the standard modern statement, and the stronger one.
-* **CNF only, with this encoding.** SAT is CNF satisfiability, not satisfiability of arbitrary
-  propositional formulas. Variable indices are written in unary, so a code can be longer than a
-  binary encoding such as DIMACS; no conversion between encodings is formalized. Words that
-  are not codes of formulas are in neither language (`Examples/Sanity.lean` checks that the
-  empty word and a code followed by extra bits are rejected).
-* **"At most three".** 3-SAT allows clauses with fewer than three literals, repeated literals and
-  the empty clause, as in Karp's 1972 list; the variant with exactly three distinct literals per
-  clause is not treated. The empty formula is true, and a formula with an empty clause is false.
+* **CNF only, with these encodings.** SAT is CNF satisfiability, not satisfiability of
+  arbitrary propositional formulas. `SAT.encode` writes variable indices in unary, so a code can
+  be longer than a binary one; `SAT.BinarySAT` therefore proves the binary-index version
+  NP-complete too (clause and literal counts stay in unary there, but they are at most the code
+  length). Concrete file formats such as DIMACS are not treated. Words that are not codes of
+  formulas are in none of the languages (`Examples/Sanity.lean` checks that the empty word and a
+  code followed by extra bits are rejected).
+* **Clause-size conventions.** 3-SAT allows clauses with fewer than three literals, repeated
+  literals and the empty clause, as in Karp's 1972 list; exactly-3-SAT is the stricter
+  convention (exactly three literals on three distinct variables). The empty formula is true,
+  and a formula with an empty clause is false. In (≤1,≤2)-SAT, occurrences are counted over
+  the whole formula, a repeated literal counting each time.
 * **Output convention.** A computed function's output is read from the final head position,
   up to the first blank or separator.
 
@@ -129,6 +160,23 @@ threeSAT_np_complete                  NPCompleteness.lean
 
 (Paths are relative to `Complexity/`.)
 
+The further theorems:
+
+```
+exactThreeSAT_np_complete             RestrictedSATComplete.lean
+├─ exactThreeSAT_inNP                 Restricted/ExactMembership.lean   check, then 3-SAT verifier
+└─ threeSAT_polyRed_exactThreeSAT     Restricted/ExactReduction.lean    transformed Cook–Levin generator
+leOneLeTwoSAT_np_complete             RestrictedSATComplete.lean
+├─ leOneLeTwoSAT_inNP                 Restricted/LeMembership.lean      occurrence counts, then 3-SAT verifier
+└─ exactThreeSAT_polyRed_leOneLeTwoSAT Restricted/LeReduction.lean
+binarySAT_np_complete                 BinarySATComplete.lean
+├─ binarySAT_inNP                     Binary/VerifierMachine.lean       one bit per occurrence, consistency
+└─ sat_polyRed_binarySAT              Binary/ReductionSemantics.lean    unary-to-binary transducer
+inNP_iff_nondeterministicPolyTime     NondeterministicEquiv.lean
+├─ inNP_of_nondeterministicPolyTime   NTM/Verifier.lean                 simulate with choices from the certificate
+└─ nondeterministicPolyTime_of_inNP   NTM/Guesser.lean                  clock, guess, check
+```
+
 * **Membership in NP.** `SATVerifier` defines the verifiers as functions: decode the formula,
   read an assignment from the certificate, evaluate. `StackSATMachine` and
   `StackThreeSATMachine` implement them as machines with polynomial running times, and
@@ -153,15 +201,35 @@ threeSAT_np_complete                  NPCompleteness.lean
 * **Composition.** `Composition` proves that `PolyTime` functions compose, by simulating both
   machines on Boolean stacks and extracting the intermediate output; `Reductions` derives
   transitivity of `PolyRed`.
+* **Exactly-3-SAT and (≤1,≤2)-SAT.** Instead of a new formula-to-formula machine, these
+  reductions transform the Cook–Levin formula generator itself (`Restricted/Annotate`,
+  `Transform`, `Copies`): every literal occurrence gets its own copy variable, a cycle of
+  2-literal implications links the copies of each variable (Tovey's construction), long clauses
+  are split by implication chains, and empty and unit clauses are rewritten locally. The result
+  is an equisatisfiable (≤1,≤2) formula, and padding its 2-literal clauses gives an exactly-3
+  formula. Since the compiled generator runs in polynomial time for every generator program,
+  both reductions hold for every NP language. Membership runs a syntactic check, written as a
+  counted stack program, before the existing 3-SAT verifier (`Restricted/CheckedVerifier`).
+* **Binary SAT.** `Binary/Increment` converts unary indices to binary with a binary counter;
+  the transducer in `Binary/Reduction*` parses a unary-coded formula and emits its binary code.
+  The verifier (`Binary/Verifier*`) takes one certificate bit per literal occurrence, checks
+  that every clause has a true literal, and compares every pair of occurrences, requiring equal
+  bits for equal variables (equal binary values, ignoring leading zeros).
+* **Nondeterminism.** `NTM/Core` simulates any `NMachine` on stacks, reading its choices from a
+  register. For one direction the verifier runs this simulation with the certificate as the
+  choices; no step counter is needed, since every path halts in time. For the other, a
+  nondeterministic machine runs a compiled clock program that writes a unary budget, a
+  two-state machine that guesses certificate bits in its place, and the compiled checker, which
+  decodes the guess and simulates the verifier on the paired input (`NTM/Guess`, `Guesser`).
 
 ## Axioms and what is trusted
 
-* `#print axioms` for both theorems gives `[propext, Classical.choice, Quot.sound]`. The default
+* `#print axioms` for every compared theorem gives `[propext, Classical.choice, Quot.sound]`. The default
   build also runs `Audit.lean`, which checks every declaration of the `Complexity` namespace
   and fails if any depends on another axiom.
 * No Lean file other than `Challenge.lean` contains `sorry`, `admit`, `native_decide` or an
   `axiom` declaration (`scripts/check_submission.py` checks this). `Challenge.lean` contains
-  exactly the two deliberate `sorry`s of the statement, as Palomar requires.
+  exactly one deliberate `sorry` per compared theorem, as Palomar requires.
 * What has to be trusted is Lean's kernel (Comparator replays the proof in several independent
   checkers) and the definitions of `Challenge.lean`. Comparator checks that the theorems of
   `Solution.lean` have exactly the types of those in `Challenge.lean`, including every definition
@@ -175,7 +243,7 @@ You need [elan](https://github.com/leanprover/elan) (it installs the Lean versio
 
 ```sh
 lake build                     # library, axiom audit, Solution and examples
-lake build Challenge           # the statement (two deliberate `sorry`s)
+lake build Challenge           # the statement (one deliberate `sorry` per theorem)
 scripts/palomar_dryrun.sh      # everything Palomar's mechanical verification runs
 ```
 
@@ -195,11 +263,11 @@ of date. Comparator, not the generator, is what establishes that the statements 
 
 | Path | Contents |
 | --- | --- |
-| `Challenge.lean` | The statement: definitions and the two theorems, with `sorry`. |
-| `Solution.lean` | Imports the proofs of the two theorems. |
+| `Challenge.lean` | The statement: definitions and the six theorems, with `sorry`. |
+| `Solution.lean` | Imports the proofs of the six theorems. |
 | `comparator.json` | The Comparator configuration Palomar uses. |
 | `formalization.yaml` | Palomar metadata: sources, authorship, AI use, review, limitations. |
-| `Complexity/` | The library: 74 modules (machine model, classes, SAT, compilers, tableau, reductions). |
+| `Complexity/` | The library: 117 modules, about 29,000 lines (machine model, classes, SAT, compilers, tableau, reductions; `Restricted/`, `Binary/` and `NTM/` for the further theorems; `Planarity.lean` and `PlanarSAT.lean` for planar 3-SAT). |
 | `Complexity.lean` | Imports the whole library. |
 | `Audit.lean` | Fails the build if a `Complexity` declaration uses a nonstandard axiom. |
 | `Examples/` | `Sanity.lean` (tests of the definitions) and `Downstream.lean` (using the results). |
@@ -211,8 +279,9 @@ of date. Comparator, not the generator, is what establishes that the statements 
 ## Using the results
 
 Import `Complexity`. To prove a new language `L` NP-complete, give `InNP L` and a reduction
-from SAT or 3-SAT to `L`, and apply `npComplete_of_sat_reduction` or
-`npComplete_of_threeSAT_reduction`; `PolyRed.trans` composes reductions, and
+to `L` from any of the NP-complete languages here (SAT, 3-SAT, exactly-3-SAT, (≤1,≤2)-SAT,
+binary SAT), and apply `NPComplete.of_reduction` (or `npComplete_of_sat_reduction`,
+`npComplete_of_threeSAT_reduction`); `PolyRed.trans` composes reductions, and
 `InNP.polyRed_sat` gives the Cook–Levin reduction from any NP language.
 [docs/FOUNDATION.md](docs/FOUNDATION.md) explains the machine-programming API (stack machines
 and their compiler) used to prove running times, and `Examples/Downstream.lean` has checked
@@ -254,8 +323,13 @@ no priority. It is independent of all of them and uses none of their code.
   TPHOLs 2004 ([doi:10.1007/978-3-540-30142-4_8](https://doi.org/10.1007/978-3-540-30142-4_8)):
   the translation of machine computations to SAT, without complexity classes.
 
+For the further theorems: the Coq and Lean developments above also prove 3-SAT (with at most or
+exactly three literals per clause) NP-complete, and the descriptive-complexity library relates
+its logically defined NP to acceptance by nondeterministic machines. A search found no earlier
+formalization of (≤1,≤2)-SAT, of the binary-index variant, or of planar 3-SAT.
+
 What distinguishes this one: the statement needs nothing beyond Lean core, so it can be audited
-in one 300-line file; it uses a single-tape model and proves every running time, including that
+in one 410-line file; it uses a single-tape model and proves every running time, including that
 of the Cook–Levin reduction itself, by counting the steps of an actual machine; and it is
 prepared for checking by Palomar's Comparator pipeline.
 
@@ -281,3 +355,8 @@ Apache License 2.0.
   through the parser `SAT.decode`; `SAT.SAT_iff_decode` proves the definitions equivalent), and
   the Challenge no longer contains the unused definitions `InP`, `Tape.size` and
   `Instruction.mapState`, nor the parser.
+* Later commits, by Claude Opus 5.5 and its subagents: `powerBound` written with `Nat.pow` so
+  that the definitions elaborate identically when Mathlib is imported (checked with a mock
+  downstream project); the definitions of the variants of SAT, of planar 3-SAT and of
+  nondeterministic machines; and the proofs of the four further compared theorems, each merged
+  as one commit after review.

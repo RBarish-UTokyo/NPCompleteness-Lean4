@@ -12,14 +12,14 @@ the command below; documentation changes do not affect it):
 ```sh
 git ls-files -- '*.lean' lakefile.toml lake-manifest.json lean-toolchain comparator.json \
   | sort | xargs sha256sum | sha256sum
-# b6ce2daf7b01e731c15294f0a65f46d54767406dc6d3216aac8b5a6e5d65453b
+# 846542b27dfe9d58d600db5a2602745590ada68aa6c04a825d22a42f419722ed
 ```
 
 | File | SHA-256 |
 | --- | --- |
-| `Challenge.lean` (300 lines, 11,485 bytes) | `216993eec75eec83c91426d1dbc1b060f531906824aa1571e8b7595b5b7ec6ec` |
-| `Solution.lean` | `c54cd2debf579c282a7cc334cad1350b27fb63a5bda67001145fba271c5c02f7` |
-| `comparator.json` | `7e9fb5af786eb1502d18983d4b14685409dca3849b38f7ce7a15a5f2eefa2145` |
+| `Challenge.lean` (410 lines, 16,871 bytes) | `51667f2ba305e7558926a030dba1516a43879eb9026be9ba544b50a4802a5d50` |
+| `Solution.lean` | `172a6069e8673ee9c52bbe4784e28d4587a205bf71e7fdc7f770dc99cda30066` |
+| `comparator.json` | `db99bcc8c7f56c725b8eaf07d921b810904be439174f28756e6c448b24302bc3` |
 
 ## Tools
 
@@ -47,26 +47,27 @@ of these tools were used.
 | Step | Command | Result |
 | --- | --- | --- |
 | Preflight | `python3 scripts/check_submission.py` | passed |
-| Build | `lake build` | 84 jobs, no errors and no warnings; `Audit.lean`: 3,793 `Complexity` declarations use only `propext`, `Classical.choice`, `Quot.sound` |
-| Statement | `lake build Challenge` | builds; the only warnings are the two deliberate `sorry`s |
+| Build | `lake build` | 127 jobs, no errors and no warnings; `Audit.lean`: 5,490 `Complexity` declarations use only `propext`, `Classical.choice`, `Quot.sound` |
+| Statement | `lake build Challenge` | builds; the only warnings are the six deliberate `sorry`s |
 | Replay | `lake check` | Lean's kernel accepts the solution; axioms `propext`, `Quot.sound`, `Classical.choice` |
 | Comparator | `lake comparator --config comparator.json --paranoid` | "Your solution is okay!" |
 
 In the Comparator run, which builds and exports both modules inside the bubblewrap sandbox
 without network access, these kernels each accepted the exported proof of both theorems:
 NanoDa, Lean's kernel in paranoid mode (`leanchecker-paranoid`), lean4lean, con-leche, con-ron,
-and Lean's default kernel. The whole run took about five minutes. Comparator's default mode (NanoDa and
+and Lean's default kernel. This covers all six compared theorems: NP-completeness of SAT, 3-SAT,
+exactly-3-SAT, (≤1,≤2)-SAT and binary-index SAT, and `inNP_iff_nondeterministicPolyTime`. The
+whole run took about seven minutes. Comparator's default mode (NanoDa and
 Lean's kernel, as Palomar runs it) also passed, both on the delivered sources and on the revised
 statement.
 
-`#print axioms Complexity.sat_np_complete` and `#print axioms Complexity.threeSAT_np_complete`
-both print `[propext, Classical.choice, Quot.sound]`.
+`#print axioms` prints `[propext, Classical.choice, Quot.sound]` for each of the six compared
+theorems.
 
 ## Continuous integration
 
 The workflow `.github/workflows/verify.yml` runs the same steps on GitHub's `ubuntu-22.04`
-runner. It passed on an earlier revision of these sources (before `powerBound` was rewritten
-with `Nat.pow`, below), ending with "Your solution is okay!".
+runner on every push, and has passed on each revision pushed so far.
 
 ## Downstream reuse with Mathlib
 
@@ -83,6 +84,12 @@ with Mathlib imported, `(n + 1) ^ k` on `Nat` elaborates through Mathlib's monoi
 (`Monoid.toNPow`) instead of core's `instPowNat`. With `powerBound` written as
 `c * Nat.pow (n + 1) k`, all definitions elaborate identically, and `lake comparator` on the
 mock project prints "Your solution is okay!".
+
+The test was repeated for the six-theorem statement: a Challenge importing all of Mathlib
+copies the whole definition block of `Challenge.lean` verbatim and states the NP-completeness of
+exactly-3-SAT, (≤1,≤2)-SAT and binary-index SAT, the NP-hardness of 3-SAT, and
+`InNP L ↔ NondeterministicPolyTime L`; its Solution proves them from the library, and Comparator
+accepts.
 
 ## Reproducing
 

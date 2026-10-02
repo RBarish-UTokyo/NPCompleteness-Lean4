@@ -1,12 +1,16 @@
 module
 
 public import Complexity.NPCompleteness
+public import Complexity.RestrictedSATComplete
+public import Complexity.BinarySATComplete
+public import Complexity.NondeterministicEquiv
 
 /-!
 Completed solution, loaded separately from Challenge.lean.
 
-The imported module proves the exact public targets
-`Complexity.sat_np_complete : Complexity.NPComplete Complexity.SAT.SAT` and
-`Complexity.threeSAT_np_complete : Complexity.NPComplete Complexity.SAT.ThreeSAT`.
-It does not import the independent Challenge or either intentional goal hole.
+The imported modules prove the public targets `Complexity.sat_np_complete`,
+`Complexity.threeSAT_np_complete`, `Complexity.exactThreeSAT_np_complete`,
+`Complexity.leOneLeTwoSAT_np_complete`, `Complexity.binarySAT_np_complete` and
+`Complexity.inNP_iff_nondeterministicPolyTime`, with exactly the statements of
+Challenge.lean. Solution does not import Challenge.lean or its intentional holes.
 -/
