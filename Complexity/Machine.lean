@@ -16,21 +16,16 @@ namespace Complexity
 
 /-- Tape symbols: the blank, the two bits, and a separator `sep` (a work symbol). -/
 inductive Symbol where
-  | blank
-  | bit (value : Bool)
-  | sep
+  | blank | bit (value : Bool) | sep
   deriving DecidableEq, Repr
 
 /-- A head movement: one cell left, none, or one cell right. -/
 inductive Move where
-  | left
-  | stay
-  | right
+  | left | stay | right
   deriving DecidableEq, Repr
 
-/-- A two-way infinite tape with a head. `right` is the scanned cell followed by
-the cells to its right; `left` holds the cells to the left of the head, nearest
-first. All cells beyond both lists are blank. -/
+/-- A two-way infinite tape: `right` is the scanned cell and the cells to its right,
+`left` the cells to its left, nearest first; all other cells are blank. -/
 structure Tape where
   left : List Symbol
   right : List Symbol
@@ -114,8 +109,7 @@ theorem move_write_size_le (a : Symbol) (d : Move) (t : Tape) :
 
 end Tape
 
-/-- An instruction: halt with a decision (`true` accepts, `false` rejects), or
-write a symbol, move the head, and enter control state `next`. -/
+/-- An instruction: `halt b` (`true` accepts), or write, move, and enter state `next`. -/
 inductive Instruction (states : Nat) where
   | halt (decision : Bool)
   | step (write : Symbol) (move : Move) (next : Fin states)
@@ -144,8 +138,7 @@ structure Config (M : Machine) where
 def initial (M : Machine) (input : List Bool) : Config M :=
   ⟨M.start, Tape.ofInput input⟩
 
-/-- One step from `c`: an instruction `halt b` stops with decision `b` and the
-current tape (`.inl`); otherwise write, move, and change state (`.inr`). -/
+/-- One step from `c`: `.inl (b, tape)` on `halt b`, else the next configuration. -/
 def step (M : Machine) (c : Config M) : (Bool × Tape) ⊕ Config M :=
   match M.code c.state c.tape.read with
   | .halt b => .inl (b, c.tape)

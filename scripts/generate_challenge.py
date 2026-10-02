@@ -93,7 +93,10 @@ def docstring_before(original: str, start: int) -> str:
     return match.group(0).rstrip() + "\n" if match else ""
 
 
-def declarations(path: str, names: list[str]) -> str:
+DERIVING = re.compile(r"\n[ \t]*deriving [^\n]*")
+
+
+def declarations(path: str, names: list[str], sep: str = "\n\n") -> str:
     original = (ROOT / path).read_text(encoding="utf-8")
     # `without_comments` preserves offsets, so positions agree with `original`.
     source = without_comments(original)
@@ -109,17 +112,20 @@ def declarations(path: str, names: list[str]) -> str:
             raise ValueError(f"Ambiguous declaration {name!r} in {path}")
         # Remove trailing whitespace left by erased comments.
         body = "\n".join(line.rstrip() for line in chunk.splitlines()).strip()
+        # `deriving` clauses only add instances, which the theorems do not mention.
+        body = DERIVING.sub("", body)
         found[name] = docstring_before(original, start) + body
     missing = [name for name in names if name not in found]
     if missing:
         raise ValueError(f"Missing declarations in {path}: {', '.join(missing)}")
-    return "\n\n".join(found[name] for name in names)
+    return sep.join(found[name] for name in names)
 
 
 def challenge_text() -> str:
     machine = "Complexity/Machine.lean"
     sat = "Complexity/SAT.lean"
     variants = "Complexity/SATVariants.lean"
+    pair = "\n"
     parts = [
         """module
 
@@ -128,52 +134,22 @@ public import Init
 /-!
 # NP-completeness of SAT and of variants of SAT
 
-This file states, for a concrete machine model and concrete binary encodings of
-CNF formulas:
+For one machine model and concrete binary codes of CNF formulas, the theorems at the end
+state that SAT, 3-SAT (at most three literals per clause), exactly-3-SAT (exactly three, on
+distinct variables), (≤1,≤2)-SAT and SAT with binary variable indices are NP-complete: in NP,
+and every language in NP reduces to them by a polynomial-time many-one reduction. A last
+theorem states that NP, defined by verifiers, is nondeterministic polynomial time.
 
-* `Complexity.sat_np_complete`: SAT, the set of codes of satisfiable CNF
-  formulas, is NP-complete (the Cook–Levin theorem).
-* `Complexity.threeSAT_np_complete`: 3-SAT, with at most three literals per
-  clause, is NP-complete.
-* `Complexity.exactThreeSAT_np_complete`: exactly-3-SAT, with exactly three
-  literals per clause on three distinct variables, is NP-complete.
-* `Complexity.leOneLeTwoSAT_np_complete`: (≤1,≤2)-SAT, with two or three
-  literals per clause and every variable occurring at most once positively and
-  at most twice negatively, is NP-complete.
-* `Complexity.binarySAT_np_complete`: SAT with variable indices written in
-  binary is NP-complete.
-* `Complexity.inNP_iff_nondeterministicPolyTime`: NP, defined by verifiers, is
-  the class of languages accepted in polynomial time by nondeterministic
-  machines.
+* Machines: deterministic single-tape Turing machines over {blank, 0, 1, separator}; time is
+  the number of steps, the halting step included. `NMachine` has two transition tables.
+* Polynomial bounds are `c * (n + 1) ^ k`. A computed function leaves its output from the
+  head onward; an NP verifier gets instance and certificate as `pairWords x w`.
+* Formulas: variables are natural numbers, a clause is a list of literals, a formula a list
+  of clauses. `encode` writes indices and lengths in unary, `encodeBinary` indices in binary.
+  Words coding no formula belong to none of the languages.
 
-NP-complete means: in NP, and every language in NP reduces to it by a
-polynomial-time many-one (Karp) reduction.
-
-## Reading guide
-
-* Machines (`Machine`, `run`): deterministic Turing machines with one two-way
-  infinite tape over the alphabet {blank, 0, 1, separator} and finitely many
-  control states. Each step either halts with a Boolean decision, or writes the
-  scanned cell, moves the head at most one cell, and changes state. Time is the
-  number of steps, the halting step included.
-* Complexity (`PolynomialTimeMachine`, `PolyTime`, `InNP`, `PolyRed`, `NPHard`,
-  `NPComplete`): languages are sets of binary words, and polynomial bounds
-  are `c * (n + 1) ^ k`. A polynomial-time function leaves its output on the
-  tape, from the head onward. NP is defined by polynomial-time verifiers and
-  polynomially bounded certificates, given to the verifier as `pairWords x w`.
-* Formulas (`Complexity.SAT`): variables are natural numbers, a clause is a list
-  of literals, a CNF formula is a list of clauses. `encode` writes variable
-  indices and list lengths in unary and a literal's sign as one bit;
-  `encodeBinary` writes variable indices in binary instead. A word that is not
-  the code of a formula belongs to none of the languages. 3-SAT allows clauses
-  with fewer than three literals, repeated literals, and empty clauses.
-* Nondeterminism (`NMachine`, `NondeterministicPolyTime`): machines with two
-  transition tables, either of which may be followed at each step; every
-  computation path halts within a polynomial bound, and an input is accepted
-  when some path accepts.
-
-Only Lean core is imported. `Solution.lean` proves the theorems without importing
-this file, which `scripts/generate_challenge.py` generates from the library sources.
+Only Lean core is imported. `scripts/generate_challenge.py` generates this file from the
+library; `Solution.lean` proves the theorems without importing it.
 -/
 
 @[expose] public section
@@ -187,16 +163,21 @@ namespace Complexity
         declarations(machine, [
             "Instruction", "Machine", "Config", "initial", "step", "run", "runInput",
         ]),
+        declarations("Complexity/Classes.lean", ["Word", "Language"], pair),
         declarations("Complexity/Classes.lean", [
-            "Word", "Language", "powerBound", "pairWords", "Accepts",
+            "powerBound", "pairWords", "Accepts",
             "PolynomialTimeMachine", "PolyTime", "InNP", "PolyRed", "NPHard", "NPComplete",
         ]),
         "end Complexity\n\nnamespace Complexity.SAT",
+        declarations(sat, ["Word", "Assignment"], pair),
+        declarations(sat, ["Literal"]),
+        declarations(sat, ["Clause", "CNF"], pair),
         declarations(sat, [
-            "Word", "Assignment", "Literal", "Clause", "CNF", "evalLiteral", "evalClause",
-            "evalCNF", "Satisfiable", "IsThreeCNF", "writeNat", "writeValues", "writeList",
-            "encodeLiteral", "encodeClause", "encode", "SAT", "ThreeSAT",
+            "evalLiteral", "evalClause", "evalCNF", "Satisfiable", "IsThreeCNF",
+            "writeNat", "writeValues", "writeList", "encodeLiteral",
         ]),
+        declarations(sat, ["encodeClause", "encode"], pair),
+        declarations(sat, ["SAT", "ThreeSAT"]),
         declarations(variants, [
             "IsExactThreeCNF", "ExactThreeSAT", "IsLeOneLeTwoCNF", "LeOneLeTwoSAT",
             "binaryValue", "BinaryLiteral", "BinaryLiteral.toLiteral", "encodeBinaryLiteral",
@@ -206,33 +187,24 @@ namespace Complexity
         declarations("Complexity/Nondeterministic.lean", [
             "NMachine", "NMachine.run", "NondeterministicPolyTime",
         ]),
-        """/-- **Cook–Levin theorem.** SAT is NP-complete: it is in NP, and every language
-in NP reduces to it by a polynomial-time many-one reduction. -/
-theorem sat_np_complete : NPComplete SAT.SAT := by
-  sorry
+        """/-- **Cook–Levin theorem.** SAT is NP-complete. -/
+theorem sat_np_complete : NPComplete SAT.SAT := by sorry
 
-/-- **3-SAT is NP-complete**: in NP, and every language in NP reduces to it by a
-polynomial-time many-one reduction. -/
-theorem threeSAT_np_complete : NPComplete SAT.ThreeSAT := by
-  sorry
+/-- 3-SAT is NP-complete. -/
+theorem threeSAT_np_complete : NPComplete SAT.ThreeSAT := by sorry
 
 /-- Exactly-3-SAT is NP-complete. -/
-theorem exactThreeSAT_np_complete : NPComplete SAT.ExactThreeSAT := by
-  sorry
+theorem exactThreeSAT_np_complete : NPComplete SAT.ExactThreeSAT := by sorry
 
 /-- (≤1,≤2)-SAT is NP-complete. -/
-theorem leOneLeTwoSAT_np_complete : NPComplete SAT.LeOneLeTwoSAT := by
-  sorry
+theorem leOneLeTwoSAT_np_complete : NPComplete SAT.LeOneLeTwoSAT := by sorry
 
 /-- SAT with binary variable indices is NP-complete. -/
-theorem binarySAT_np_complete : NPComplete SAT.BinarySAT := by
-  sorry
+theorem binarySAT_np_complete : NPComplete SAT.BinarySAT := by sorry
 
-/-- NP, defined by verifiers and certificates, is nondeterministic polynomial
-time. -/
+/-- NP, defined by verifiers, is nondeterministic polynomial time. -/
 theorem inNP_iff_nondeterministicPolyTime (L : Language) :
-    InNP L ↔ NondeterministicPolyTime L := by
-  sorry
+    InNP L ↔ NondeterministicPolyTime L := by sorry
 
 end Complexity
 """,

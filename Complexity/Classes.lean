@@ -31,8 +31,7 @@ def powerBound (coefficient exponent inputSize : Nat) : Nat :=
 theorem powerBound_eq (coefficient exponent inputSize : Nat) :
     powerBound coefficient exponent inputSize = coefficient * (inputSize + 1) ^ exponent := rfl
 
-/-- The pair `(x, y)` as one word: `|x|` ones, a zero, then `x` and `y`. A
-verifier for NP receives an instance `x` and a certificate `y` this way. -/
+/-- The pair `(x, y)` as one word, `|x|` ones, a zero, `x`, `y`: how NP verifiers get input. -/
 def pairWords (x y : Word) : Word :=
   List.replicate x.length true ++ false :: (x ++ y)
 
@@ -40,8 +39,7 @@ def pairWords (x y : Word) : Word :=
 def Accepts (M : Machine) (input : Word) : Prop :=
   ∃ time tape, runInput M time input = some (true, tape)
 
-/-- `M` runs in polynomial time: for some `c` and `k`, on every input of length
-`n` it halts, accepting or rejecting, within `c * (n + 1) ^ k` steps. -/
+/-- `M` halts, accepting or rejecting, within `c * (n + 1) ^ k` steps on every input. -/
 def PolynomialTimeMachine (M : Machine) : Prop :=
   ∃ coefficient exponent, ∀ input : Word,
     ∃ time decision tape,
@@ -74,8 +72,7 @@ def InNP (L : Language) : Prop :=
         witness.length ≤ powerBound coefficient exponent input.length ∧
         Accepts M (pairWords input witness)
 
-/-- Polynomial-time many-one (Karp) reducibility of `A` to `B`: a polynomial-time
-computable `f` with `x ∈ A ↔ f x ∈ B` for every word `x`. -/
+/-- Karp reducibility: a polynomial-time `f` with `x ∈ A ↔ f x ∈ B` for every word `x`. -/
 def PolyRed (A B : Language) : Prop :=
   ∃ f : Word → Word, PolyTime f ∧ ∀ input, A input ↔ B (f input)
 

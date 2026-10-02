@@ -16,18 +16,17 @@ that every computation path halts within a polynomial number of steps. The theor
 
 namespace Complexity
 
-/-- A nondeterministic single-tape Turing machine: like `Machine`, but with two transition
-tables, `code false` and `code true`; at every step the machine may follow either. -/
+/-- A nondeterministic machine: like `Machine`, with two tables; each step may follow either. -/
 structure NMachine where
   states : Nat
   start : Fin (states + 1)
   code : Bool → Fin (states + 1) → Symbol → Instruction (states + 1)
 
-/-- `M.run choices q t` runs `M` from control state `q` and tape `t`, using the table
-`code c` at the step that consumes the choice `c`. It is `some (b, t')` if the machine
-executes `halt b` within the steps given by `choices` (halting counts as a step), `t'` being
-the final tape, and `none` if it has not halted when the choices run out. -/
-def NMachine.run (M : NMachine) : List Bool → Fin (M.states + 1) → Tape → Option (Bool × Tape)
+/-- `M.run choices q t` runs `M` from state `q` and tape `t`, using the table `code c` for the
+step consuming choice `c`: `some (b, t')` if it executes `halt b` (halting counts as a step)
+before the choices run out, with final tape `t'`, and `none` otherwise. -/
+def NMachine.run (M : NMachine) :
+    List Bool → Fin (M.states + 1) → Tape → Option (Bool × Tape)
   | [], _, _ => none
   | c :: choices, q, t =>
     match M.code c q t.read with

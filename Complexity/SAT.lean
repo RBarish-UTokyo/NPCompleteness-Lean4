@@ -181,8 +181,7 @@ theorem readList_writeList {α : Type} (parse : Parser α) (enc : α → Word)
     readList parse (writeList enc xs ++ rest) = some (xs, rest) := by
   simp [readList, writeList, List.append_assoc, readMany_writeValues parse enc h]
 
-/-- The code of a literal: its sign bit (`true` if positive), then its variable
-index in unary. -/
+/-- The code of a literal: its sign bit (`true` if positive), then its index in unary. -/
 def encodeLiteral (l : Literal) : Word :=
   l.positive :: writeNat l.var
 
@@ -243,13 +242,11 @@ theorem encode_prefix_free {f g : CNF} {rest : Word}
   have hp : (g, ([] : Word)) = (f, rest) := Option.some.inj hf
   exact ⟨(congrArg Prod.fst hp).symm, (congrArg Prod.snd hp).symm⟩
 
-/-- SAT: the words `encode f` with `f` a satisfiable CNF formula. A word that is
-not the code of a formula is not in SAT. -/
+/-- SAT: the words `encode f` with `f` satisfiable (no other word is in SAT). -/
 def SAT (input : Word) : Prop :=
   ∃ f, encode f = input ∧ Satisfiable f
 
-/-- 3-SAT: the words `encode f` with `f` a satisfiable CNF formula all of whose
-clauses have at most three literals. -/
+/-- 3-SAT: the words `encode f` with `f` satisfiable and `IsThreeCNF f`. -/
 def ThreeSAT (input : Word) : Prop :=
   ∃ f, encode f = input ∧ IsThreeCNF f ∧ Satisfiable f
 

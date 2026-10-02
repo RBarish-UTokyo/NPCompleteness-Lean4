@@ -43,7 +43,7 @@ This development was written by AI, under human direction.
 * A human maintainer set the task and its constraints.
 
 No human has reviewed the mathematics. So please don't take the theorem on anyone's authority.
-The part a person has to read is the statement, `Challenge.lean`: 410 lines of elementary,
+The part a person has to read is the statement, `Challenge.lean`: 343 lines of elementary,
 documented definitions that import nothing but Lean core (see [What it proves](#what-it-proves)).
 Everything else is checked by machine, by Lean's kernel and by independently written checkers.
 
@@ -329,7 +329,7 @@ its logically defined NP to acceptance by nondeterministic machines. A search fo
 formalization of (≤1,≤2)-SAT, of the binary-index variant, or of planar 3-SAT.
 
 What distinguishes this one: the statement needs nothing beyond Lean core, so it can be audited
-in one 410-line file; it uses a single-tape model and proves every running time, including that
+in one 343-line file; it uses a single-tape model and proves every running time, including that
 of the Cook–Levin reduction itself, by counting the steps of an actual machine; and it is
 prepared for checking by Palomar's Comparator pipeline.
 

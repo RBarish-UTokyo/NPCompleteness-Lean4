@@ -25,8 +25,7 @@ namespace Complexity.SAT
 def IsExactThreeCNF (f : CNF) : Prop :=
   ∀ c ∈ f, c.length = 3 ∧ (c.map Literal.var).Nodup
 
-/-- Exactly-3-SAT: the words `encode f` with `f` satisfiable and every clause of `f` made of
-exactly three literals on three distinct variables. -/
+/-- Exactly-3-SAT: the words `encode f` with `f` satisfiable and `IsExactThreeCNF f`. -/
 def ExactThreeSAT (input : Word) : Prop :=
   ∃ f, encode f = input ∧ IsExactThreeCNF f ∧ Satisfiable f
 
@@ -46,8 +45,7 @@ def binaryValue : List Bool → Nat
   | [] => 0
   | b :: bits => b.toNat + 2 * binaryValue bits
 
-/-- A literal whose variable is given by its binary digits, least significant first. Leading
-zeros are allowed, so a variable has several such names. -/
+/-- A literal naming its variable by binary digits, least significant first (zeros may trail). -/
 structure BinaryLiteral where
   bits : List Bool
   positive : Bool
@@ -56,18 +54,15 @@ structure BinaryLiteral where
 def BinaryLiteral.toLiteral (l : BinaryLiteral) : Literal :=
   ⟨binaryValue l.bits, l.positive⟩
 
-/-- The code of a binary literal: its sign bit, then its digits as a list (their number in
-unary, then the digits). -/
+/-- The code of a binary literal: its sign bit, then its digits (their count in unary first). -/
 def encodeBinaryLiteral (l : BinaryLiteral) : Word :=
   l.positive :: writeList (fun b => [b]) l.bits
 
-/-- The code of a formula with binary variable indices: the list of its clauses, each the list
-of its literals. Clause and literal counts stay in unary; they are at most the code length. -/
+/-- The code of a formula with binary indices; clause and literal counts stay in unary. -/
 def encodeBinary (f : List (List BinaryLiteral)) : Word :=
   writeList (writeList encodeBinaryLiteral) f
 
-/-- SAT with binary variable indices: the words `encodeBinary f` such that the formula `f`
-names is satisfiable. -/
+/-- Binary SAT: the words `encodeBinary f` such that the formula `f` names is satisfiable. -/
 def BinarySAT (input : Word) : Prop :=
   ∃ f, encodeBinary f = input ∧ Satisfiable (f.map (List.map BinaryLiteral.toLiteral))
 
