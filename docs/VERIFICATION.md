@@ -12,14 +12,14 @@ the command below; documentation changes do not affect it):
 ```sh
 git ls-files -- '*.lean' lakefile.toml lake-manifest.json lean-toolchain comparator.json \
   | sort | xargs sha256sum | sha256sum
-# 7ac5d33374427d4149d35288740b6c49dbabc2fcb88fe0811b3dd37d970aa2f0
+# 7b445aa8d51b6b82020e93cbea8814d2a2b747c4d30d245aef3cfd7ff15f85d1
 ```
 
 | File | SHA-256 |
 | --- | --- |
 | `Challenge.lean` (464 lines, 19,509 bytes) | `9ac53982033a1ac805af6e1b2f9668a3f03fa6585f7b4fff5225f846c7d25d1b` |
 | `Solution.lean` | `2121d213a5df53ebf279da116a461b02efb81ed60a23776187ae2feb1230d2b5` |
-| `comparator.json` | `db99bcc8c7f56c725b8eaf07d921b810904be439174f28756e6c448b24302bc3` |
+| `comparator.json` | `9a326941839c8ed4a435d7ddb263d280bbdbcbbca21c6e7b20b7420dadfa62c8` |
 
 ## Tools
 

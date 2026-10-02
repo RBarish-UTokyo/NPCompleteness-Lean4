@@ -1,8 +1,8 @@
 # Submitting to Palomar
 
 The repository is prepared for [Palomar](https://palomar-registry.org/how-to-submit) but has
-**not** been submitted, and it is private. Submission is a decision for the responsible
-maintainer. This page lists what remains and what submitting publishes.
+**not** been submitted. Submission is a decision for the responsible maintainer. This page
+lists what remains and what submitting publishes.
 
 ## What is ready
 
@@ -27,7 +27,7 @@ maintainer. This page lists what remains and what submitting publishes.
    `python3 scripts/check_submission.py --submission`, which rejects placeholders. Read
    `Challenge.lean`, and check the AI credits in `formalization.yaml` (`automation`) and in
    the README.
-2. **Make the repository public.** Palomar fetches only public GitHub repositories. The
+2. **Use a public repository.** Palomar fetches only public GitHub repositories. The
    repository root is the Lean project, so no project path is needed.
 3. **Fix the commit.** Merge the work into the branch you want, push, and let the workflow
    "Verify Lean and Comparator" pass on that exact commit. Record the full 40-character SHA
