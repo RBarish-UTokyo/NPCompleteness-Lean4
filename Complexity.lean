@@ -7,3 +7,4 @@ public import Complexity.PlanarSAT
 public import Complexity.Nondeterministic
 public import Complexity.NondeterministicEquiv
 public import Complexity.BinarySATComplete
+public import Complexity.RestrictedSATComplete
