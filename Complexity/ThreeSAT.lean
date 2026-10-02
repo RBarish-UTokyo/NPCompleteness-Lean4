@@ -316,10 +316,9 @@ theorem reduceWord_correct (input : Word) :
     SAT input ↔ Complexity.SAT.ThreeSAT (reduceWord input) := by
   cases hd : decode input with
   | none =>
-    simp [SAT, hd, reduceWord, Complexity.SAT.ThreeSAT,
-      Satisfiable, evalCNF, evalClause]
+    simp [SAT_iff_decode, hd, reduceWord, Satisfiable, evalCNF, evalClause]
   | some f =>
-    simp [SAT, hd, reduceWord, ThreeSAT_encode_iff, toThreeCNF_three,
+    simp [SAT_iff_decode, hd, reduceWord, ThreeSAT_encode_iff, toThreeCNF_three,
       toThreeCNF_equisatisfiable]
 
 end Complexity.ThreeSAT

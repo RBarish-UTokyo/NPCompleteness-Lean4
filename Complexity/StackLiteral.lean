@@ -321,7 +321,7 @@ theorem literalBody_success {k : Nat} (input certificate work scratch flag : Fin
     h.certificate_scratch h.work_scratch r hempty
   have hi : r' input = encodeLiteral l ++ rest := by
     simp only [r', StackMachine.set_other r h.input_work]
-    exact Complexity.SATBounds.readLiteral_eq_some hr
+    exact Complexity.SAT.readLiteral_eq_some hr
   have he := exec_core_encoded input work flag h.input_work h.input_flag h.work_flag l rest r' hi
   have hh := exec_seq (Complexity.StackWords.copy certificate work scratch) (core input work flag) hc he
   have hf := finish_copy input certificate work scratch flag h r l rest
@@ -359,7 +359,7 @@ theorem literalBody_success_bound {k : Nat} (input certificate work scratch flag
       (true, bodyFinish input certificate work flag r l rest) := by
   have he := literalBody_success input certificate work scratch flag h r hempty l rest hr
   refine ⟨_, ?_, he⟩
-  have hinput := Complexity.SATBounds.readLiteral_eq_some hr
+  have hinput := Complexity.SAT.readLiteral_eq_some hr
   have hlen := congrArg List.length hinput
   simp only [List.length_append, Complexity.SATBounds.encodeLiteral_length] at hlen
   split <;> omega
@@ -406,7 +406,7 @@ theorem bodyFinish_measure {k : Nat} (input certificate work scratch flag : Fin 
       (bodyFinish input certificate work flag r l rest flag).length + 1 ≤
       (r input).length + (r flag).length := by
   rw [bodyFinish_input input certificate work scratch flag h, bodyFinish_flag]
-  have hlen := congrArg List.length (Complexity.SATBounds.readLiteral_eq_some hr)
+  have hlen := congrArg List.length (Complexity.SAT.readLiteral_eq_some hr)
   simp only [List.length_append, Complexity.SATBounds.encodeLiteral_length] at hlen
   split
   · simp only [List.length_cons]

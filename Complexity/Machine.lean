@@ -14,22 +14,23 @@ bits beginning at the final head position, ending at the first non-bit symbol.
 
 namespace Complexity
 
-/-- The fixed tape alphabet: blank, either binary digit, and a separator. -/
+/-- Tape symbols: the blank, the two bits, and a separator `sep` (a work symbol). -/
 inductive Symbol where
   | blank
   | bit (value : Bool)
   | sep
   deriving DecidableEq, Repr
 
-/-- A head displacement of at most one tape cell. -/
+/-- A head movement: one cell left, none, or one cell right. -/
 inductive Move where
   | left
   | stay
   | right
   deriving DecidableEq, Repr
 
-/-- The left list starts immediately left of the head; the right list starts at
-the head. Both lists point away from the head; unstored cells are blank. -/
+/-- A two-way infinite tape with a head. `right` is the scanned cell followed by
+the cells to its right; `left` holds the cells to the left of the head, nearest
+first. All cells beyond both lists are blank. -/
 structure Tape where
   left : List Symbol
   right : List Symbol
@@ -37,15 +38,14 @@ structure Tape where
 
 namespace Tape
 
-/-- Read the cell under the head, with an implicit blank beyond stored cells. -/
+/-- The scanned symbol (blank beyond the stored cells). -/
 def read (t : Tape) : Symbol := t.right.headD .blank
 
-/-- Replace the cell under the head, storing it when it was implicit. -/
+/-- Overwrite the scanned cell with `a`. -/
 def write (a : Symbol) (t : Tape) : Tape :=
   { t with right := a :: t.right.drop 1 }
 
-/-- Shift the head one cell or leave it in place. No tape cell is computed by
-any operation other than this local movement or `write`. -/
+/-- Move the head by `d`, storing a blank cell when it moves past the stored cells. -/
 def move (d : Move) (t : Tape) : Tape :=
   match d with
   | .stay => t
@@ -58,15 +58,15 @@ def move (d : Move) (t : Tape) : Tape :=
     | [] => ⟨.blank :: t.left, []⟩
     | a :: rest => ⟨a :: t.left, rest⟩
 
-/-- Encode a binary input on an otherwise blank tape, head at its first bit. -/
+/-- The tape holding `input` as bits, head on its first cell, blank elsewhere. -/
 def ofInput (input : List Bool) : Tape := ⟨[], input.map Symbol.bit⟩
 
-/-- Read a finite initial segment consisting entirely of bits. -/
+/-- The longest prefix of a symbol list made of bits, as a binary word. -/
 def bits : List Symbol → List Bool
   | .bit b :: rest => b :: bits rest
   | _ => []
 
-/-- Binary output beginning at the head and ending at a blank or separator. -/
+/-- The output: the bits from the head rightwards, up to the first non-bit cell. -/
 def output (t : Tape) : List Bool := bits t.right
 
 /-- Number of explicitly represented cells; this includes stored blank cells. -/
@@ -114,8 +114,8 @@ theorem move_write_size_le (a : Symbol) (d : Move) (t : Tape) :
 
 end Tape
 
-/-- A halting instruction returns its Boolean decision without changing tape.
-A transition writes one symbol, moves at most one cell, and changes state. -/
+/-- An instruction: halt with a decision (`true` accepts, `false` rejects), or
+write a symbol, move the head, and enter control state `next`. -/
 inductive Instruction (states : Nat) where
   | halt (decision : Bool)
   | step (write : Symbol) (move : Move) (next : Fin states)
@@ -128,31 +128,32 @@ def Instruction.mapState {n m : Nat} (rename : Fin n → Fin m) :
   | .halt b => .halt b
   | .step a d q => .step a d (rename q)
 
-/-- A finite deterministic transition table over a fixed four-symbol alphabet.
-`states + 1` ensures that an initial state exists. -/
+/-- A deterministic single-tape Turing machine: control states `Fin (states + 1)`,
+a start state, and an instruction for every control state and scanned symbol. -/
 structure Machine where
   states : Nat
   start : Fin (states + 1)
   code : Fin (states + 1) → Symbol → Instruction (states + 1)
 
-/-- The machine state and its single tape, including head position. -/
+/-- A configuration of `M`: control state and tape (with head). -/
 structure Config (M : Machine) where
   state : Fin (M.states + 1)
   tape : Tape
 
-/-- Initial configuration of a binary-string computation. -/
+/-- The initial configuration on `input`: start state, input tape (`Tape.ofInput`). -/
 def initial (M : Machine) (input : List Bool) : Config M :=
   ⟨M.start, Tape.ofInput input⟩
 
-/-- One actual instruction: a halt returns the decision and tape, while a
-transition returns the new finite-control state and locally updated tape. -/
+/-- One step from `c`: an instruction `halt b` stops with decision `b` and the
+current tape (`.inl`); otherwise write, move, and change state (`.inr`). -/
 def step (M : Machine) (c : Config M) : (Bool × Tape) ⊕ Config M :=
   match M.code c.state c.tape.read with
   | .halt b => .inl (b, c.tape)
   | .step a d q => .inr ⟨q, (c.tape.write a).move d⟩
 
-/-- Execute at most `fuel` instructions. Even a halting instruction costs one
-step. `none` means no halt was observed within the supplied bound. -/
+/-- `run M fuel c` executes at most `fuel` steps from `c`. It is `some (b, t)` if
+the machine executes `halt b` within these steps (halting counts as a step),
+`t` being the final tape, and `none` if it has not halted after `fuel` steps. -/
 def run (M : Machine) : Nat → Config M → Option (Bool × Tape)
   | 0, _ => none
   | fuel + 1, c =>
@@ -160,7 +161,7 @@ def run (M : Machine) : Nat → Config M → Option (Bool × Tape)
     | .halt b => some (b, c.tape)
     | .step a d q => run M fuel ⟨q, (c.tape.write a).move d⟩
 
-/-- Execute on an initially blank tape containing only the given input. -/
+/-- `run` from the initial configuration on `input`. -/
 def runInput (M : Machine) (fuel : Nat) (input : List Bool) :
     Option (Bool × Tape) := run M fuel (initial M input)
 

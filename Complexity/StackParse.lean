@@ -191,7 +191,7 @@ theorem exec_readUnary {k : Nat} (src dst : Fin (k + 1)) (hne : src ≠ dst)
   | some result =>
     obtain ⟨n, rest⟩ := result
     simpa [readUnary, seq, clear, readUnaryTime, readUnaryResult, hp] using
-      exec_readUnary_encoded src dst hne n rest r (SATBounds.readNat_eq_some hp)
+      exec_readUnary_encoded src dst hne n rest r (Complexity.SAT.readNat_eq_some hp)
 
 theorem readUnaryTime_le {k : Nat} (src dst : Fin (k + 1)) (r : Registers k) :
     readUnaryTime src dst r ≤ (r dst).length + 2 * (r src).length + 4 := by
@@ -199,7 +199,7 @@ theorem readUnaryTime_le {k : Nat} (src dst : Fin (k + 1)) (r : Registers k) :
   | none => simp [readUnaryTime, hp]
   | some result =>
     obtain ⟨n, rest⟩ := result
-    have hs := SATBounds.readNat_eq_some hp
+    have hs := Complexity.SAT.readNat_eq_some hp
     have hlen := congrArg List.length hs
     simp only [List.length_append, SATBounds.writeNat_length] at hlen
     simp only [readUnaryTime, hp]

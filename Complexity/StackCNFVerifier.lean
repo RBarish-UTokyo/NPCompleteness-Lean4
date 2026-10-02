@@ -59,7 +59,7 @@ theorem Bounded.unary {bound : Nat} {cert : Word} {r : Registers 6}
     (hf : j ≠ flag) (hs : j ≠ scratch) (n : Nat) (rest : Word)
     (hp : readNat (r input) = some (n, rest)) :
     Bounded bound cert (StackMachine.set (StackMachine.set r input rest) j (List.replicate n true)) := by
-  have hlen := congrArg List.length (SATBounds.readNat_eq_some hp)
+  have hlen := congrArg List.length (Complexity.SAT.readNat_eq_some hp)
   simp only [List.length_append, SATBounds.writeNat_length] at hlen
   have hsource := h.source_flag
   have hin := h.stack_le input
@@ -87,7 +87,7 @@ theorem Bounded.literal {bound : Nat} {cert : Word} {r : Registers 6}
     (h : Bounded bound cert r) (l : Literal) (rest : Word)
     (hp : readLiteral (r input) = some (l, rest)) :
     Bounded bound cert (StackLiteral.bodyFinish input certificate work flag r l rest) := by
-  have hlen := congrArg List.length (SATBounds.readLiteral_eq_some hp)
+  have hlen := congrArg List.length (Complexity.SAT.readLiteral_eq_some hp)
   simp only [List.length_append, SATBounds.encodeLiteral_length] at hlen
   have hsource := h.source_flag
   have hc := h.stack_le certificate
@@ -398,9 +398,9 @@ theorem clause_runs (bound : Nat) (cert : Word) (r : Registers 6) (h : Bounded b
     have h₁ : Bounded bound cert r₁ := h₀.unary inner (by decide) (by decide) (by decide) (by decide) n rest hp₀
     have hparse : Exec (readUnary input inner) (readUnary input inner).start r₀
         ((r₀ inner).length + 2 * n + 4) (true, r₁) :=
-      exec_readUnary_encoded input inner (by decide) n rest r₀ (SATBounds.readNat_eq_some hp₀)
+      exec_readUnary_encoded input inner (by decide) n rest r₀ (Complexity.SAT.readNat_eq_some hp₀)
     have hn : n ≤ bound := by
-      have hl := congrArg List.length (SATBounds.readNat_eq_some hp)
+      have hl := congrArg List.length (Complexity.SAT.readNat_eq_some hp)
       simp only [List.length_append, SATBounds.writeNat_length] at hl
       omega
     have hprod : n * (8 * bound + 13) ≤ bound * (8 * bound + 13) :=
@@ -513,9 +513,9 @@ theorem verifier_runs (bound : Nat) (cert : Word) (r : Registers 6) (h : Bounded
       h.unary outer (by decide) (by decide) (by decide) (by decide) n rest hp
     have hparse : Exec (readUnary input outer) (readUnary input outer).start r
         ((r outer).length + 2 * n + 4) (true, r₁) :=
-      exec_readUnary_encoded input outer (by decide) n rest r (SATBounds.readNat_eq_some hp)
+      exec_readUnary_encoded input outer (by decide) n rest r (Complexity.SAT.readNat_eq_some hp)
     have hn : n ≤ bound := by
-      have hl := congrArg List.length (SATBounds.readNat_eq_some hp)
+      have hl := congrArg List.length (Complexity.SAT.readNat_eq_some hp)
       simp only [List.length_append, SATBounds.writeNat_length] at hl
       omega
     have hprod : n * (clauseCost bound + 1) ≤ bound * (clauseCost bound + 1) :=

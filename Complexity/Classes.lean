@@ -15,33 +15,37 @@ polynomial-time composition and Cook–Levin for these same concrete definitions
 
 namespace Complexity
 
+/-- Binary words. -/
 abbrev Word := List Bool
+
+/-- A language (decision problem): a set of binary words. -/
 abbrev Language := Word → Prop
 
-/-- A convenient cofinal family of nonnegative polynomial bounds. -/
+/-- The bound `c * (n + 1) ^ k`. Every polynomial in `n` with natural coefficients
+is at most such a bound, so these bounds express polynomial time and length. -/
 def powerBound (coefficient exponent inputSize : Nat) : Nat :=
   coefficient * (inputSize + 1) ^ exponent
 
-/-- A prefix code for two binary words: unary length of the first word,
-a false delimiter, then the first and second words. -/
+/-- The pair `(x, y)` as one word: `|x|` ones, a zero, then `x` and `y`. A
+verifier for NP receives an instance `x` and a certificate `y` this way. -/
 def pairWords (x y : Word) : Word :=
   List.replicate x.length true ++ false :: (x ++ y)
 
-/-- Acceptance means a genuine finite computation ending in `halt true`. -/
+/-- `M` accepts `input`: its run on `input` halts with decision `true`. -/
 def Accepts (M : Machine) (input : Word) : Prop :=
   ∃ time tape, runInput M time input = some (true, tape)
 
-/-- A fixed finite machine halts on every input within one polynomial bound.
-Both accepting and rejecting executions must satisfy this bound. -/
+/-- `M` runs in polynomial time: for some `c` and `k`, on every input of length
+`n` it halts, accepting or rejecting, within `c * (n + 1) ^ k` steps. -/
 def PolynomialTimeMachine (M : Machine) : Prop :=
   ∃ coefficient exponent, ∀ input : Word,
     ∃ time decision tape,
       time ≤ powerBound coefficient exponent input.length ∧
       runInput M time input = some (decision, tape)
 
-/-- A total string function is computed by a fixed finite transducer within a
-uniform polynomial number of local instructions. The output is physically
-present on the final tape, beginning at its head. -/
+/-- `f` is computable in polynomial time: one machine, on every input `x` of
+length `n`, halts with decision `true` within `c * (n + 1) ^ k` steps, with
+`f x` as the output (`Tape.output`) of its final tape. -/
 def PolyTime (f : Word → Word) : Prop :=
   ∃ M : Machine, ∃ coefficient exponent, ∀ input : Word,
     ∃ time tape,
@@ -54,9 +58,9 @@ def InP (L : Language) : Prop :=
   ∃ M : Machine, PolynomialTimeMachine M ∧
     ∀ input, L input ↔ Accepts M input
 
-/-- NP via polynomially bounded certificates and a deterministic polynomial-time
-verifier. The verifier must halt in polynomial time on *every* paired input;
-the accepted witness length is bounded in the instance length alone. -/
+/-- NP, in its certificate (verifier) form: some polynomial-time machine `M` and
+bound `p n = c * (n + 1) ^ k` satisfy, for every word `x`: `x ∈ L` iff `M`
+accepts `pairWords x w` for some certificate `w` with `|w| ≤ p |x|`. -/
 def InNP (L : Language) : Prop :=
   ∃ M : Machine, ∃ coefficient exponent,
     PolynomialTimeMachine M ∧
@@ -65,14 +69,16 @@ def InNP (L : Language) : Prop :=
         witness.length ≤ powerBound coefficient exponent input.length ∧
         Accepts M (pairWords input witness)
 
-/-- A total polynomial-time many-one (Karp) reduction. -/
+/-- Polynomial-time many-one (Karp) reducibility of `A` to `B`: a polynomial-time
+computable `f` with `x ∈ A ↔ f x ∈ B` for every word `x`. -/
 def PolyRed (A B : Language) : Prop :=
   ∃ f : Word → Word, PolyTime f ∧ ∀ input, A input ↔ B (f input)
 
-/-- Hardness quantifies over all languages with machine-based NP verifiers. -/
+/-- `L` is NP-hard: every language in NP reduces to `L`. -/
 def NPHard (L : Language) : Prop :=
   ∀ A : Language, InNP A → PolyRed A L
 
+/-- `L` is NP-complete: `L` is in NP and is NP-hard. -/
 def NPComplete (L : Language) : Prop :=
   InNP L ∧ NPHard L
 

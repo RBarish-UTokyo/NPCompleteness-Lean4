@@ -197,7 +197,7 @@ theorem threeClauseParser_eq (cert : Word) (w : Word) :
     | some result =>
       obtain ⟨c, tail⟩ := result
       have hlen : c.length = n :=
-        (SATBounds.readMany_eq_some readLiteral encodeLiteral SATBounds.readLiteral_eq_some hm).1
+        (Complexity.SAT.readMany_eq_some readLiteral encodeLiteral Complexity.SAT.readLiteral_eq_some hm).1
       by_cases hn : n ≤ 3 <;>
         simp [threeClauseParser, precheckParser, headerPrefix_eq, clauseParser,
           readClause, readList, hp, hm, clausePredicate, hlen, hn]
@@ -333,9 +333,9 @@ theorem threeVerifier_runs (bound : Nat) (cert : Word) (r : Registers 6) (h : Bo
       h.unary outer (by decide) (by decide) (by decide) (by decide) n rest hp
     have hparse : Exec (readUnary input outer) (readUnary input outer).start r
         ((r outer).length + 2 * n + 4) (true, r₁) :=
-      exec_readUnary_encoded input outer (by decide) n rest r (SATBounds.readNat_eq_some hp)
+      exec_readUnary_encoded input outer (by decide) n rest r (Complexity.SAT.readNat_eq_some hp)
     have hn : n ≤ bound := by
-      have hl := congrArg List.length (SATBounds.readNat_eq_some hp)
+      have hl := congrArg List.length (Complexity.SAT.readNat_eq_some hp)
       simp only [List.length_append, SATBounds.writeNat_length] at hl
       omega
     have hprod : n * (threeClauseCost bound + 1) ≤ bound * (threeClauseCost bound + 1) :=

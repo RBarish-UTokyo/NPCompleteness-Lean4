@@ -3,9 +3,12 @@
 
 This is a layout-aware extractor for the named declarations in this project,
 not a general Lean parser or a replacement for the official Comparator.
-`--check` detects drift without changing a file. In particular, keep `step`
-before `run`: Lean reuses its generated matcher when elaborating `run`, and the
-independent statement must reproduce those auxiliary declaration names too.
+Each declaration is copied with the documentation comment that immediately
+precedes it in the source, so the Challenge and the library share docstrings.
+Other comments are dropped. `--check` detects drift without changing a file.
+In particular, keep `step` before `run`: Lean reuses its generated matcher when
+elaborating `run`, and the independent statement must reproduce those
+auxiliary declaration names too.
 """
 from __future__ import annotations
 
@@ -81,8 +84,19 @@ DECLARATION = re.compile(
 )
 
 
+DOCSTRING_BEFORE = re.compile(r"/--(?:(?!-/).)*-/\s*\Z", re.S)
+
+
+def docstring_before(original: str, start: int) -> str:
+    """The documentation comment ending just before offset `start`, if any."""
+    match = DOCSTRING_BEFORE.search(original, 0, start)
+    return match.group(0).rstrip() + "\n" if match else ""
+
+
 def declarations(path: str, names: list[str]) -> str:
-    source = without_comments((ROOT / path).read_text(encoding="utf-8"))
+    original = (ROOT / path).read_text(encoding="utf-8")
+    # `without_comments` preserves offsets, so positions agree with `original`.
+    source = without_comments(original)
     starts = [match.start() for match in BOUNDARY.finditer(source)]
     found: dict[str, str] = {}
     for start, end in zip(starts, starts[1:] + [len(source)]):
@@ -93,8 +107,9 @@ def declarations(path: str, names: list[str]) -> str:
         name = match.group(1)
         if name in found:
             raise ValueError(f"Ambiguous declaration {name!r} in {path}")
-        # Remove trailing whitespace left by erased documentation comments.
-        found[name] = "\n".join(line.rstrip() for line in chunk.splitlines()).strip()
+        # Remove trailing whitespace left by erased comments.
+        body = "\n".join(line.rstrip() for line in chunk.splitlines()).strip()
+        found[name] = docstring_before(original, start) + body
     missing = [name for name in names if name not in found]
     if missing:
         raise ValueError(f"Missing declarations in {path}: {', '.join(missing)}")
@@ -110,18 +125,39 @@ def challenge_text() -> str:
 public import Init
 
 /-!
-Independent target statement for SAT and 3-SAT NP-completeness.
+# SAT and 3-SAT are NP-complete
 
-NP uses polynomial-length binary certificates checked by a deterministic finite
-single-tape machine. Reductions are total polynomial-time machine computations.
-SAT is encoded CNF satisfiability; 3-SAT means clauses of at most three literals.
-The unary prefix encoding and malformed-input rejection are specified below.
+This file states the Cook–Levin theorem and its 3-SAT form, for a concrete
+machine model and a concrete binary encoding of CNF formulas:
 
-The two intentional theorem holes are the submission targets. This independent
-statement imports no project modules and is never imported by the proof library.
-Solution.lean imports the completed proofs in a separate Lean environment.
-Regenerate with `python3 scripts/generate_challenge.py` after definition edits;
-`--check` checks source drift. Official comparison remains a separate check.
+* `Complexity.sat_np_complete`: SAT, the set of codes of satisfiable CNF
+  formulas, is NP-complete.
+* `Complexity.threeSAT_np_complete`: 3-SAT, the set of codes of satisfiable
+  CNF formulas with at most three literals per clause, is NP-complete.
+
+NP-complete means: in NP, and every language in NP reduces to it by a
+polynomial-time many-one (Karp) reduction.
+
+## Reading guide
+
+* Machines (`Machine`, `run`): deterministic Turing machines with one two-way
+  infinite tape over the alphabet {blank, 0, 1, separator} and finitely many
+  control states. Each step either halts with a Boolean decision, or writes the
+  scanned cell, moves the head at most one cell, and changes state. Time is the
+  number of steps, the halting step included.
+* Complexity (`PolynomialTimeMachine`, `PolyTime`, `InNP`, `PolyRed`, `NPHard`,
+  `NPComplete`): languages are sets of binary words, and polynomial bounds
+  are `c * (n + 1) ^ k`. A polynomial-time function leaves its output on the
+  tape, from the head onward. NP is defined by polynomial-time verifiers and
+  polynomially bounded certificates, given to the verifier as `pairWords x w`.
+* Formulas (`Complexity.SAT`): variables are natural numbers, a clause is a list
+  of literals, a CNF formula is a list of clauses. `encode` writes variable
+  indices and list lengths in unary and a literal's sign as one bit. A word that
+  is not the code of a formula belongs to neither language. 3-SAT allows clauses
+  with fewer than three literals, repeated literals, and empty clauses.
+
+Only Lean core is imported. `Solution.lean` proves both theorems without importing
+this file, which `scripts/generate_challenge.py` generates from the library sources.
 -/
 
 @[expose] public section
@@ -130,32 +166,32 @@ namespace Complexity
 """,
         declarations(machine, ["Symbol", "Move", "Tape"]),
         "namespace Tape",
-        declarations(machine, ["read", "write", "move", "ofInput", "bits", "output", "size"]),
+        declarations(machine, ["read", "write", "move", "ofInput", "bits", "output"]),
         "end Tape",
         declarations(machine, [
-            "Instruction", "Instruction.mapState", "Machine", "Config", "initial",
-            "step", "run", "runInput",
+            "Instruction", "Machine", "Config", "initial", "step", "run", "runInput",
         ]),
         declarations("Complexity/Classes.lean", [
             "Word", "Language", "powerBound", "pairWords", "Accepts",
-            "PolynomialTimeMachine", "PolyTime", "InP", "InNP", "PolyRed", "NPHard", "NPComplete",
+            "PolynomialTimeMachine", "PolyTime", "InNP", "PolyRed", "NPHard", "NPComplete",
         ]),
         "end Complexity\n\nnamespace Complexity.SAT",
         declarations(sat, [
             "Word", "Assignment", "Literal", "Clause", "CNF", "evalLiteral", "evalClause",
-            "evalCNF", "Satisfiable", "IsThreeCNF", "Parser", "writeNat", "readNat",
-            "writeValues", "readMany", "writeList", "readList", "encodeLiteral", "readLiteral",
-            "encodeClause", "readClause", "encode", "readCNF", "decode", "SAT", "ThreeSAT",
+            "evalCNF", "Satisfiable", "IsThreeCNF", "writeNat", "writeValues", "writeList",
+            "encodeLiteral", "encodeClause", "encode", "SAT", "ThreeSAT",
         ]),
         """end Complexity.SAT
 
 namespace Complexity
 
-/-- Cook–Levin: encoded CNF satisfiability is NP-complete. -/
+/-- **Cook–Levin theorem.** SAT is NP-complete: it is in NP, and every language
+in NP reduces to it by a polynomial-time many-one reduction. -/
 theorem sat_np_complete : NPComplete SAT.SAT := by
   sorry
 
-/-- Encoded 3-CNF satisfiability is NP-complete. -/
+/-- **3-SAT is NP-complete**: in NP, and every language in NP reduces to it by a
+polynomial-time many-one reduction. -/
 theorem threeSAT_np_complete : NPComplete SAT.ThreeSAT := by
   sorry
 

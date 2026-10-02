@@ -16,4 +16,4 @@ name = "Solution"
 
 [[lean_lib]]
 name = "Examples"
-roots = ["Examples.Downstream"]
+roots = ["Examples.Downstream", "Examples.Sanity"]

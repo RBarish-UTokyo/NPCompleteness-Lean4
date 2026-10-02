@@ -237,7 +237,7 @@ theorem chainCNF_equisatisfiable (n : Nat) (f : CNF) (hf : CNFBelow n f) :
 
 theorem decoded_below_length {input : Word} {f : CNF} (hd : decode input = some f) :
     CNFBelow input.length f := by
-  have hin := (SATBounds.decode_eq_some_iff input f).mp hd
+  have hin := (Complexity.SAT.decode_eq_some_iff input f).mp hd
   have hb := SATBounds.variableBound_le_encode_length f
   rw [hin]
   intro c hc l hl
@@ -254,10 +254,10 @@ theorem reduceWord_correct (input : Word) :
     SAT input ↔ SAT.ThreeSAT (reduceWord input) := by
   cases hd : decode input with
   | none =>
-    simp [SAT, hd, reduceWord, SAT.ThreeSAT, Satisfiable, evalCNF, evalClause]
+    simp [SAT_iff_decode, hd, reduceWord, Satisfiable, evalCNF, evalClause]
   | some f =>
     have hs := chainCNF_equisatisfiable input.length f (decoded_below_length hd)
-    simp [SAT, hd, reduceWord, ThreeSAT_encode_iff, chainCNF_three, hs]
+    simp [SAT_iff_decode, hd, reduceWord, ThreeSAT_encode_iff, chainCNF_three, hs]
 
 theorem formula_length_le_size (f : CNF) : f.length ≤ formulaSize f := by
   induction f with
@@ -270,7 +270,7 @@ theorem reduceWord_length (input : Word) :
   cases hd : decode input with
   | none => simp [reduceWord, hd, encode, encodeClause, writeList, writeValues, writeNat]
   | some f =>
-    have hin := (SATBounds.decode_eq_some_iff input f).mp hd
+    have hin := (Complexity.SAT.decode_eq_some_iff input f).mp hd
     have hsize : formulaSize f ≤ input.length := by
       rw [hin]
       exact SATBounds.formulaSize_le_encode_length f

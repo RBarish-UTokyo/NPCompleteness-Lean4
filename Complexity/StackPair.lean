@@ -213,7 +213,7 @@ theorem decodePair_eq_some_iff (word x y : List Bool) :
       · have hp : rest.take n = x ∧ rest.drop n = y := by simpa [decodePair, hn, hle] using h
         rcases hp with ⟨rfl, rfl⟩
         have hlen : (rest.take n).length = n := by simp [List.length_take, Nat.min_eq_left hle]
-        rw [SATBounds.readNat_eq_some hn]
+        rw [Complexity.SAT.readNat_eq_some hn]
         simp [pairWords, Complexity.StackParse.writeNat_eq, hlen, List.append_assoc]
       · simp [decodePair, hn, hle] at h
   · rintro rfl
@@ -245,13 +245,13 @@ theorem unpack_failure (word : List Bool) (h : decodePair word = none) :
     let r := initial word
     let r₁ := StackMachine.set (StackMachine.set r input rest) counter (List.replicate n true)
     have hp := Complexity.StackParse.exec_readUnary_encoded input counter (by decide) n rest r
-      (by simpa [r, initial] using SATBounds.readNat_eq_some hn)
+      (by simpa [r, initial] using Complexity.SAT.readNat_eq_some hn)
     obtain ⟨out, hg⟩ := exec_gather_short rest n r₁
       (by simp [r₁, input, counter]) (by simp [r₁]) hnlarge
     have hg' := exec_seq_failure gather finish hg
     have hh := exec_seq (Complexity.StackParse.readUnary input counter) (seq gather finish) hp hg'
     refine ⟨(r counter).length + 2 * n + 4 + (4 * rest.length + 3), out, ?_, hh⟩
-    have hlen := congrArg List.length (SATBounds.readNat_eq_some hn)
+    have hlen := congrArg List.length (Complexity.SAT.readNat_eq_some hn)
     simp only [List.length_append, SATBounds.writeNat_length] at hlen
     simp [r, initial, input, counter]
     omega

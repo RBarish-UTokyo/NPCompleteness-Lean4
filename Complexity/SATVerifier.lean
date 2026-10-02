@@ -60,7 +60,8 @@ theorem verify_sound {input certificate : Word}
   cases hd : decode input with
   | none => simp [verify, hd] at h
   | some f =>
-    exact ⟨f, hd, assignment certificate, by simpa [verify, hd] using h⟩
+    exact (SAT_iff_decode input).mpr
+      ⟨f, hd, assignment certificate, by simpa [verify, hd] using h⟩
 
 theorem verify_complete_encoded {f : CNF} (h : Satisfiable f) :
     ∃ certificate : Word,
@@ -73,8 +74,8 @@ theorem verify_complete_encoded {f : CNF} (h : Satisfiable f) :
 theorem verify_complete {input : Word} (h : SAT input) :
     ∃ certificate : Word,
       certificate.length ≤ input.length ∧ verify input certificate = true := by
-  obtain ⟨f, hf, hs⟩ := h
-  have hinput := (Complexity.SATBounds.decode_eq_some_iff input f).mp hf
+  obtain ⟨f, hf, hs⟩ := (SAT_iff_decode input).mp h
+  have hinput := (Complexity.SAT.decode_eq_some_iff input f).mp hf
   obtain ⟨certificate, hlen, hc⟩ := verify_complete_encoded hs
   refine ⟨certificate, ?_, ?_⟩
   · rw [hlen, hinput]
@@ -108,7 +109,7 @@ theorem verifyThree_sound {input certificate : Word}
     have hh : f.all (fun c => decide (c.length ≤ 3)) = true ∧
         evalCNF (assignment certificate) f = true := by
       simpa [verifyThree, hd] using h
-    refine ⟨f, hd, ?_, assignment certificate, hh.2⟩
+    refine (ThreeSAT_iff_decode input).mpr ⟨f, hd, ?_, assignment certificate, hh.2⟩
     simpa [IsThreeCNF] using hh.1
 
 theorem verifyThree_complete_encoded {f : CNF}
@@ -125,8 +126,8 @@ theorem verifyThree_complete_encoded {f : CNF}
 theorem verifyThree_complete {input : Word} (h : ThreeSAT input) :
     ∃ certificate : Word,
       certificate.length ≤ input.length ∧ verifyThree input certificate = true := by
-  obtain ⟨f, hf, h₃, hs⟩ := h
-  have hinput := (Complexity.SATBounds.decode_eq_some_iff input f).mp hf
+  obtain ⟨f, hf, h₃, hs⟩ := (ThreeSAT_iff_decode input).mp h
+  have hinput := (Complexity.SAT.decode_eq_some_iff input f).mp hf
   obtain ⟨certificate, hlen, hc⟩ := verifyThree_complete_encoded h₃ hs
   refine ⟨certificate, ?_, ?_⟩
   · rw [hlen, hinput]

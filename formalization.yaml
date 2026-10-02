@@ -1,0 +1,266 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+# formalization.yaml v0.4
+version: "v0.4"
+
+project:
+  name: "SAT and 3-SAT are NP-complete (the Cook–Levin theorem) in Lean 4"
+  description: >-
+    A Lean 4 proof of the Cook–Levin theorem and of the NP-completeness of 3-SAT, for
+    an explicit machine model, using only Lean's core library. The two compared theorems,
+    Complexity.sat_np_complete and Complexity.threeSAT_np_complete, state that SAT, the
+    set of binary codes of satisfiable CNF formulas, and 3-SAT, the set of codes of
+    satisfiable CNF formulas with at most three literals per clause, are NP-complete:
+    each is in NP, and every language in NP reduces to it by a polynomial-time many-one
+    (Karp) reduction. Languages are sets of binary words. Computation is by deterministic
+    Turing machines with a single two-way infinite tape over a four-symbol alphabet, and
+    time is the number of machine steps. NP is defined by polynomial-time verifiers and
+    polynomially bounded certificates, the standard certificate characterization; a
+    reduction is a function computed by such a machine within a polynomial number of
+    steps. Formulas are coded with unary variable indices and list lengths; words that
+    code no formula belong to neither language.
+
+    For an arbitrary NP verifier, the hardness proof builds a CNF formula describing the
+    computation tableau of the verifier on the input and an unknown certificate; it is
+    satisfiable exactly when some certificate makes the verifier accept. The reduction is itself implemented as a machine: it is written in a
+    small language of loops over unary counters, compiled through finite programs on Boolean
+    stacks to the single-tape model, and its running time is proved by counting the
+    executed steps. SAT is reduced to 3-SAT by replacing each clause with a chain of clauses
+    of at most three literals linked by fresh variables, and the reductions are composed as
+    machines. Membership in NP is proved with explicit
+    verifier machines for both languages. The development was written by AI under human
+    direction: GPT-6 Astra (OpenAI) produced the proof, and Claude Opus 5.5 (Anthropic) ran
+    its full verification, revised the statement for auditability and prepared it for
+    Palomar. The proof uses only the axioms propext, Classical.choice and
+    Quot.sound.
+  # Palomar requires the names of the responsible people (humans only); fill in before
+  # submitting and check with `python3 scripts/check_submission.py --submission`.
+  authors:
+    - "[to be completed before submission]"
+  license: "Apache-2.0"
+  responsible_maintainers:
+    - "[to be completed before submission]"
+
+classification:
+  arxiv: [cs.CC, cs.LO]
+  msc2020: [68Q17, 68Q15, 03D15, 68Q04, 68V20]
+
+sources:
+  - title: "The complexity of theorem-proving procedures"
+    authors:
+      - "Stephen A. Cook"
+    type: paper
+    id: "doi:10.1145/800157.805047"
+    location: "Proceedings of the Third Annual ACM Symposium on Theory of Computing (STOC 1971), pp. 151-158"
+    relationship: formalizes
+    note: >-
+      The NP-completeness of satisfiability. Cook's paper uses polynomial-time Turing
+      reductions ("P-reducibility") and states the result for the tautology problem of
+      formulas in disjunctive normal form; the statement formalized here is the now standard
+      form with many-one (Karp) reductions and CNF satisfiability, proved by the standard
+      computation-tableau argument. The machine model, encoding and timed implementation are
+      this development's own.
+    author_endorsement: not-contacted
+  - title: "Universal sequential search problems"
+    authors:
+      - "Leonid A. Levin"
+    type: paper
+    location: "Problemy Peredachi Informatsii 9(3) (1973), 115-116 (in Russian); English translation in Problems of Information Transmission 9(3) (1973), 265-266"
+    relationship: background
+    note: >-
+      Independent discovery of NP-completeness (for search problems), whence the name
+      Cook–Levin theorem. Cited for attribution; the formalized proof does not follow it.
+    author_endorsement: not-contacted
+  - title: "Reducibility among combinatorial problems"
+    authors:
+      - "Richard M. Karp"
+    type: paper
+    id: "doi:10.1007/978-1-4684-2001-2_9"
+    location: "Complexity of Computer Computations (R. E. Miller and J. W. Thatcher, eds.), Plenum Press (1972), pp. 85-103"
+    relationship: formalizes
+    note: >-
+      Polynomial-time many-one reductions and the NP-completeness of satisfiability with
+      at most three literals per clause, the convention of the 3-SAT statement formalized
+      here. The SAT-to-3-SAT reduction is a variant of the standard construction: each clause
+      becomes a chain of clauses of at most three literals linked by fresh variables.
+    author_endorsement: not-contacted
+  - title: "Computational Complexity: A Modern Approach"
+    authors:
+      - "Sanjeev Arora"
+      - "Boaz Barak"
+    type: book
+    id: "ISBN 978-0-521-42426-4"
+    location: "Cambridge University Press (2009), Chapter 2"
+    relationship: background
+    note: >-
+      Textbook reference for the definitions used in the statement: NP by polynomial-time
+      verifiers and polynomially bounded certificates, Karp reductions, NP-hardness and
+      NP-completeness over binary strings.
+    author_endorsement: not-contacted
+
+related_formalizations:
+  - id: "https://github.com/uds-psl/coq-library-complexity"
+    relationship: independent
+    note: >-
+      Lennard Gäher and Fabian Kunze, "Mechanising Complexity Theory: The Cook-Levin
+      Theorem in Coq", ITP 2021, doi:10.4230/LIPIcs.ITP.2021.20 (supplementary snapshot at
+      https://github.com/uds-psl/cook-levin). Proves SAT and 3-SAT NP-complete in Coq, with
+      NP and polynomial time defined in the call-by-value lambda calculus L and a reduction
+      chain through Turing machines and tableau problems. No code from it is used here.
+  - id: "https://isa-afp.org/entries/Cook_Levin.html"
+    relationship: independent
+    note: >-
+      Frank J. Balbach, "The Cook-Levin theorem", Archive of Formal Proofs, January 2023
+      (Isabelle/HOL). Proves CNF-SAT NP-complete for multi-tape Turing machines, following
+      Arora and Barak, through oblivious two-tape machines.
+  - id: "https://github.com/SamuelSchlesinger/complexitylib"
+    relationship: independent
+    note: >-
+      Complexitylib (Samuel Schlesinger and contributors), a Lean 4 library of complexity
+      theory built on Mathlib, over multi-tape Turing machines in the style of Arora and
+      Barak; among many other results it proves SAT and 3SAT NP-complete. It is the closest
+      prior Lean 4 work. The present development is independent of it and uses neither
+      Mathlib nor Complexitylib: its statement depends only on Lean core, and it uses a
+      single-tape machine model with the 'at most three literals' convention for 3-SAT.
+  - id: "https://github.com/DominicBreuker/cook-levin-lean"
+    relationship: independent
+    note: >-
+      Dominic Breuker's Lean 4 and Mathlib proof that SAT, CNF satisfiability over bit
+      strings with unary variable indices, is NP-complete for single-tape Turing machine
+      verifiers. It does not treat 3-SAT. Independent of this development.
+  - id: "https://github.com/PierreSenellart/descriptive-complexity"
+    relationship: independent
+    note: >-
+      Pierre Senellart and Anton Gnatenko, "Descriptive Complexity in Lean: Completeness by
+      First-Order Reductions", arXiv:2609.18261 (2026). A machine-free Lean 4 and Mathlib
+      treatment in which NP is defined logically (existential second-order logic) and
+      hardness uses first-order reductions; proves SAT, 3SAT and Karp's 21 problems
+      complete. A different formulation of NP-completeness from the machine-based one here.
+  - id: "doi:10.1007/978-3-540-30142-4_8"
+    relationship: independent
+    note: >-
+      Ruben Gamboa and John Cowles, "A Mechanical Proof of the Cook-Levin Theorem",
+      TPHOLs 2004 (ACL2). Mechanizes the translation of single-tape Turing machine
+      computations into satisfiability, without the complexity classes or running times.
+
+status:
+  scope: >-
+    Proved: the two compared theorems, Complexity.sat_np_complete and
+    Complexity.threeSAT_np_complete, for the definitions of Challenge.lean (a deterministic
+    single-tape machine model, polynomial time, NP by verifiers and certificates, Karp
+    reductions, NP-hardness and NP-completeness, CNF formulas and their binary code). On
+    the way: NP membership of both languages by explicit verifier machines, the Cook–Levin
+    reduction from every NP language to SAT as a timed machine (InNP.polyRed_sat), a timed
+    SAT-to-3-SAT machine, and the composition of polynomial-time machines (PolyRed.trans).
+    Not included: equivalence of the verifier definition of NP with nondeterministic
+    machines, invariance under other machine models, other encodings of formulas (binary
+    variable indices, DIMACS), arbitrary propositional formulas, and the 'exactly three
+    distinct literals' convention for 3-SAT.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: [propext, Classical.choice, Quot.sound]
+  main_results:
+    - declaration: Complexity.sat_np_complete
+      file: Complexity/NPCompleteness.lean
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: comparator.json
+    - declaration: Complexity.threeSAT_np_complete
+      file: Complexity/NPCompleteness.lean
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: comparator.json
+
+automation:
+  methods:
+    - method: agent
+      models: ["GPT-6 Astra (OpenAI)"]
+      framework: "OpenAI Codex (cooperating agents)"
+      tool_setup: >-
+        Agents wrote the Lean source with the pinned Lean release. In their restricted
+        environment the lean executable could not start, so they elaborated the sources
+        through the Lean frontend embedded in a small C host, checked the exported proofs with
+        the official Comparator functions and the leanchecker, NanoDa and con-ron checkers,
+        and prepared the packaging. That workaround is preserved in the first commit of this
+        repository and has since been replaced by the ordinary Lake build.
+      cost:
+        wall_time: "not recorded"
+        spend_usd: "not recorded"
+      prompting_notes: "Not published."
+    - method: agent
+      models: ["Claude Opus 5.5 (Anthropic)"]
+      framework: "Claude Code"
+      tool_setup: >-
+        Claude Code with file and shell tools, the Lean toolchain v4.35.0-rc2 with Lake,
+        bubblewrap, and the checkers bundled with that release
+        (leanchecker, lean4lean, NanoDa, con-leche, con-ron), and web access for the
+        Palomar policy and the literature.
+      cost:
+        wall_time: "not tracked"
+        spend_usd: "not tracked"
+      prompting_notes: "Not published."
+  spend_usd: "not tracked"
+  notes: >-
+    GPT-6 Astra (OpenAI) wrote the mathematical development: every definition and proof of
+    the Complexity library, the Challenge generator, and the original documentation and
+    packaging, delivered as an archive with local validation records. Claude Opus 5.5
+    (Anthropic) then ran the ordinary Lake build, lake check and the sandboxed Comparator with
+    all bundled checkers for the first time; revised the statement for auditability (a
+    docstring on every Challenge definition, SAT and 3-SAT defined as images of the encoder
+    rather than through a parser, unused definitions dropped from the Challenge, all proved
+    equivalent or checked by Comparator); added the lemmas this needed and a file of sanity
+    checks; fixed the continuous integration and linter warnings; surveyed prior
+    formalizations; and wrote this metadata and the documentation. A human maintainer
+    directed the work. README.md ("AI disclosure", "History of this repository") gives the
+    details, and the first commit holds the Lean sources as delivered.
+
+fidelity:
+  divergences: |-
+    - Machine model: deterministic Turing machines with one two-way infinite tape over the alphabet {blank, 0, 1, separator}; an input word is written on the tape with the head on its first cell. A halting instruction carries the decision and counts as a step. Time is the number of steps. Textbooks often use multi-tape machines; the classes P and NP do not depend on this choice, but that invariance is not proved here.
+    - Polynomial bounds are written c * (n + 1)^k, which bound every polynomial with natural coefficients.
+    - NP is defined by verifiers (InNP): a polynomial-time machine M and a bound p(n) = c * (n + 1)^k such that x is in L iff M accepts pairWords x w for some certificate w with |w| <= p(|x|). The verifier must halt within its time bound on every input. The equivalence with nondeterministic polynomial-time machines is a standard theorem that is not proved here.
+    - Certificates are bounded by p(|x|) rather than having length exactly p(|x|) as in Arora and Barak; the two definitions are equivalent.
+    - A pair (x, w) is given to the verifier as 1^|x| 0 x w.
+    - A polynomial-time function (PolyTime) is computed by one machine that halts with decision true and leaves the output on the tape, from the head up to the first non-bit cell.
+    - Reductions are polynomial-time many-one (Karp) reductions. Cook's 1971 paper used polynomial-time Turing reductions; the many-one form is the standard modern statement and is stronger.
+    - SAT is CNF satisfiability, not satisfiability of arbitrary propositional formulas. A formula is a list of clauses, a clause a list of literals, and variables are natural numbers.
+    - The code of a formula writes list lengths and variable indices in unary and a literal's sign as one bit (SAT.encode). A unary index can make a code longer than a binary encoding such as DIMACS; conversions between these encodings are not formalized. Words that are not codes of formulas are in neither language.
+    - 3-SAT means at most three literals per clause, as in Karp (1972). Clauses with fewer literals, repeated literals, and empty clauses are allowed. The variant requiring exactly three distinct literals is not treated.
+    - The empty formula is true, and a formula containing an empty clause is false.
+
+review:
+  status: agent-reviewed
+  reviewers:
+    - "Claude Opus 5.5 (Anthropic), which did not write the original proof"
+  notes: >-
+    Claude Opus 5.5 compared every definition of Challenge.lean with the textbook notions
+    (Arora and Barak, Chapter 2) and recorded the differences under fidelity.divergences. It
+    also edited the statement (see automation.notes); Examples/Sanity.lean checks concrete
+    instances and that NP-hard languages have members and nonmembers. Mechanically, on the
+    pinned toolchain v4.35.0-rc2: lake build (with an audit of all Complexity declarations
+    for axioms), lake check, and lake comparator --paranoid, in which Lean's kernel,
+    leanchecker-paranoid, lean4lean, NanoDa, con-leche and con-ron all accepted the proofs
+    of both compared theorems. docs/VERIFICATION.md records these runs. No human has
+    reviewed the mathematics.
+
+alignment:
+  namespace: Complexity
+  statements:
+    - source: "Cook (1971); Levin (1973): satisfiability is NP-complete"
+      lean: "Complexity.sat_np_complete : NPComplete SAT.SAT"
+      module: Solution
+      status: proved
+      note: >-
+        SAT is in NP (Complexity.sat_inNP) and NP-hard (Complexity.sat_np_hard, from the
+        timed tableau reduction InNP.polyRed_sat).
+    - source: "Karp (1972): satisfiability with at most three literals per clause is NP-complete"
+      lean: "Complexity.threeSAT_np_complete : NPComplete SAT.ThreeSAT"
+      module: Solution
+      status: proved
+      note: >-
+        3-SAT is in NP (Complexity.threeSAT_inNP) and NP-hard, by composing the Cook–Levin
+        reduction with the timed SAT-to-3-SAT reduction (sat_polyRed_threeSAT).
+
+acknowledgements: >-
+  Stephen Cook, Leonid Levin and Richard Karp for the theorems; the authors of the earlier
+  formalizations listed above; the Lean developers; and the authors of the checkers
+  leanchecker, lean4lean, NanoDa, con-leche and con-ron.

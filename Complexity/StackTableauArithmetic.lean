@@ -44,7 +44,7 @@ theorem exec_addLength {k : Nat} (src dst scratch : Fin (k + 1))
     funext a
     by_cases hd : a = dst
     · subst a
-      simp [r₂, r₁, hsd, Ne.symm hsd, hst, hdt, Ne.symm hdt, hempty, map_ones]
+      simp [r₂, r₁, Ne.symm hsd, hst, hdt, hempty, map_ones]
     · by_cases hsrc : a = src
       · subst a
         simp [r₂, r₁, hd, hst, hempty]
@@ -189,7 +189,7 @@ theorem multiply_cost_le (sourceLength multiplier destinationLength counterLengt
       5 * bound * bound + 12 * bound + 10 := by
   have hmul := Nat.mul_le_mul hm (show 5 * sourceLength + 5 ≤ 5 * bound + 5 by omega)
   have heq : bound * (5 * bound + 5) = 5 * bound * bound + 5 * bound := by
-    simp [Nat.mul_add, Nat.mul_assoc, Nat.mul_left_comm, Nat.mul_comm]
+    simp [Nat.mul_add, Nat.mul_comm]
   rw [heq] at hmul
   omega
 

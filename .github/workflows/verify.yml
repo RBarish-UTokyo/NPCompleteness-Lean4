@@ -1,0 +1,53 @@
+name: Verify Lean and Comparator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the sandbox and the metadata parser
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap python3-yaml
+      - name: Submission preflight
+        run: python3 scripts/check_submission.py
+      - name: Install pinned Lean toolchain
+        uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9 # v1.5.0
+        with:
+          auto-config: "false"
+          build: "false"
+          test: "false"
+          lint: "false"
+          use-github-cache: "false"
+          use-mathlib-cache: "false"
+      - name: Put the bundled checkers (NanoDa and others) on PATH
+        run: echo "$(lean --print-prefix)/bin" >> "$GITHUB_PATH"
+      - name: Build library, axiom audit, Solution and examples
+        run: |
+          mkdir -p .lake/ci-logs
+          lake build 2>&1 | tee .lake/ci-logs/build.log
+      - name: Build independent Challenge
+        run: lake build Challenge 2>&1 | tee .lake/ci-logs/challenge.log
+      - name: Replay default target proofs
+        run: lake check 2>&1 | tee .lake/ci-logs/check.log
+      - name: Compare in the sandbox with every bundled kernel
+        run: lake comparator --config comparator.json --paranoid 2>&1 | tee .lake/ci-logs/comparator.log
+      - name: Retain verification logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lean-and-comparator-logs
+          path: .lake/ci-logs/
+          if-no-files-found: ignore

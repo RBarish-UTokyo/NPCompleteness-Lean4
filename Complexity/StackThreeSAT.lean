@@ -140,7 +140,7 @@ theorem copyLiteral_success {k : Nat} (source varReg output scratch : Fin (k + 1
       (copyLiteral source varReg output scratch).start r
       ((r varReg).length + 7 * l.var + 15)
       (true, literalFinish source varReg output r l rest) := by
-  have hi' := SATBounds.readLiteral_eq_some hi
+  have hi' := Complexity.SAT.readLiteral_eq_some hi
   cases l with
   | mk n sign =>
     have hh := readLiteralSign_success source varReg output scratch hv r hs sign n rest hi'
@@ -377,7 +377,7 @@ structure Bounded (bound : Nat) (r : Registers 7) : Prop where
 theorem Bounded.literal {bound : Nat} {r : Registers 7} (h : Bounded bound r)
     (l : Literal) (rest : Word) (hp : readLiteral (r input) = some (l, rest)) :
     Bounded bound (chainLiteralFinish r l rest) := by
-  have he := congrArg List.length (SATBounds.readLiteral_eq_some hp)
+  have he := congrArg List.length (Complexity.SAT.readLiteral_eq_some hp)
   simp only [List.length_append, SATBounds.encodeLiteral_length] at he
   have hin := h.input_le
   constructor
@@ -422,7 +422,7 @@ theorem chainLiteral_runs (bound capacity : Nat) (r : Registers 7)
     · simp [Realizes, literalStep, hp]
   | some pair =>
     obtain ⟨l, rest⟩ := pair
-    have hlen := congrArg List.length (SATBounds.readLiteral_eq_some hp)
+    have hlen := congrArg List.length (Complexity.SAT.readLiteral_eq_some hp)
     simp only [List.length_append, SATBounds.encodeLiteral_length] at hlen
     refine ⟨(r work).length + 7 * l.var + 10 * (r fresh).length + 45,
       true, chainLiteralFinish r l rest, ?_, chainLiteral_success r hb.scratch_eq l rest hp, ?_⟩
@@ -549,7 +549,7 @@ theorem Bounded.unit {bound : Nat} {r : Registers 7} (h : Bounded bound r)
 theorem Bounded.unary {bound : Nat} {r : Registers 7} (h : Bounded bound r)
     (n : Nat) (rest : Word) (hp : readNat (r input) = some (n, rest)) :
     Bounded bound (set (set r input rest) inner (List.replicate n true)) := by
-  have he := congrArg List.length (SATBounds.readNat_eq_some hp)
+  have he := congrArg List.length (Complexity.SAT.readNat_eq_some hp)
   simp only [List.length_append, SATBounds.writeNat_length] at he
   have hin := h.input_le
   constructor
@@ -608,7 +608,7 @@ theorem clause_runs (bound capacity : Nat) (r : Registers 7)
     · simp [Realizes, clauseStep, hp]
   | some pair =>
     obtain ⟨n, rest⟩ := pair
-    have hlen := congrArg List.length (SATBounds.readNat_eq_some hp)
+    have hlen := congrArg List.length (Complexity.SAT.readNat_eq_some hp)
     simp only [List.length_append, SATBounds.writeNat_length] at hlen
     have hn : n ≤ bound := by have h := hb.input_le; omega
     let r₀ := set (set r input rest) inner (List.replicate n true)
@@ -625,7 +625,7 @@ theorem clause_runs (bound capacity : Nat) (r : Registers 7)
         StackMachine.set_other _ (by decide : outer ≠ inner),
         StackMachine.set_other _ (by decide : outer ≠ input)]
     have hread := exec_readUnary_encoded input inner (by decide) n rest r
-      (SATBounds.readNat_eq_some hp)
+      (Complexity.SAT.readNat_eq_some hp)
     have hstart := emitUnit_runs true r₀ hb₀.scratch_eq
     obtain ⟨t, b, mid, ht, he, hspec, hsuccess⟩ := literals_runs bound capacity n r₁ hb₁
       hinner (by simpa [hfresh] using Nat.le_trans (Nat.add_le_add_left hn _) hc)
@@ -811,7 +811,7 @@ theorem parseCNF_runs (bound capacity : Nat) (r : Registers 7)
     · simp [Realizes, parseCNFStep, hp]
   | some pair =>
     obtain ⟨n, rest⟩ := pair
-    have hlen := congrArg List.length (SATBounds.readNat_eq_some hp)
+    have hlen := congrArg List.length (Complexity.SAT.readNat_eq_some hp)
     simp only [List.length_append, SATBounds.writeNat_length] at hlen
     have hn : n ≤ bound := by have h := hb.input_le; omega
     let r₀ := set (set r input rest) outer (List.replicate n true)
@@ -828,7 +828,7 @@ theorem parseCNF_runs (bound capacity : Nat) (r : Registers 7)
       have hm := Nat.mul_le_mul_right (bound + 1) hn
       omega
     have hread := exec_readUnary_encoded input outer (by decide) n rest r
-      (SATBounds.readNat_eq_some hp)
+      (Complexity.SAT.readNat_eq_some hp)
     obtain ⟨t, b, mid, ht, he, hspec, hsuccess⟩ := clauses_runs bound capacity n r₀ hb₀
       (by simp [r₀]) hi₀ hc₀
     cases hex : clausesStep n r₀ with

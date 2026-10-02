@@ -14,29 +14,41 @@ semantic and serialization facts only; it asserts no machine running-time bound.
 
 namespace Complexity.SAT
 
+/-- Binary words (the same type as `Complexity.Word`). -/
 abbrev Word := List Bool
+
+/-- A truth assignment to the variables `x 0, x 1, x 2, …`. -/
 abbrev Assignment := Nat → Bool
 
+/-- The literal `x var` if `positive`, and its negation `¬ x var` otherwise. -/
 structure Literal where
   var : Nat
   positive : Bool
 deriving DecidableEq, Repr
 
+/-- A clause: the disjunction of its literals. -/
 abbrev Clause := List Literal
+
+/-- A CNF formula: the conjunction of its clauses. -/
 abbrev CNF := List Clause
 
+/-- The truth value of a literal under `a`. -/
 def evalLiteral (a : Assignment) (l : Literal) : Bool :=
   if l.positive then a l.var else !(a l.var)
 
+/-- The truth value of a clause (the empty clause is false). -/
 def evalClause (a : Assignment) (c : Clause) : Bool :=
   c.any (evalLiteral a)
 
+/-- The truth value of a formula (the empty formula is true). -/
 def evalCNF (a : Assignment) (f : CNF) : Bool :=
   f.all (evalClause a)
 
+/-- Some assignment makes `f` true. -/
 def Satisfiable (f : CNF) : Prop :=
   ∃ a, evalCNF a f = true
 
+/-- Every clause of `f` has at most three literals. -/
 def IsThreeCNF (f : CNF) : Prop :=
   ∀ c ∈ f, c.length ≤ 3
 
@@ -109,13 +121,16 @@ theorem not_satisfiable_empty_clause (f : CNF) : ¬ Satisfiable ([] :: f) := by
   intro ⟨a, h⟩
   simp at h
 
+/-- A parser reads a value from the front of a word and returns it together with
+the rest of the word, or fails. -/
 abbrev Parser (α : Type) := Word → Option (α × Word)
 
-/-- A unary numeral consists of `n` true bits followed by one false bit. -/
+/-- The unary code of `n`: `n` ones followed by a zero. -/
 def writeNat : Nat → Word
   | 0 => [false]
   | n + 1 => true :: writeNat n
 
+/-- Parse a unary code, as written by `writeNat`. -/
 def readNat : Parser Nat
   | [] => none
   | false :: rest => some (0, rest)
@@ -129,10 +144,12 @@ def readNat : Parser Nat
   | zero => rfl
   | succ n ih => simp [writeNat, readNat, ih]
 
+/-- Concatenate the codes of the elements of a list. -/
 def writeValues {α : Type} (enc : α → Word) : List α → Word
   | [] => []
   | x :: xs => enc x ++ writeValues enc xs
 
+/-- Parse exactly `n` values one after the other. -/
 def readMany {α : Type} (parse : Parser α) : Nat → Parser (List α)
   | 0, rest => some ([], rest)
   | n + 1, input => do
@@ -149,9 +166,11 @@ theorem readMany_writeValues {α : Type} (parse : Parser α) (enc : α → Word)
   | cons x xs ih =>
       simp [writeValues, readMany, List.append_assoc, h, ih]
 
+/-- The code of a list: its length in unary, then the codes of its elements. -/
 def writeList {α : Type} (enc : α → Word) (xs : List α) : Word :=
   writeNat xs.length ++ writeValues enc xs
 
+/-- Parse a list, as written by `writeList`. -/
 def readList {α : Type} (parse : Parser α) : Parser (List α) := fun input => do
   let (n, rest) ← readNat input
   readMany parse n rest
@@ -162,9 +181,12 @@ theorem readList_writeList {α : Type} (parse : Parser α) (enc : α → Word)
     readList parse (writeList enc xs ++ rest) = some (xs, rest) := by
   simp [readList, writeList, List.append_assoc, readMany_writeValues parse enc h]
 
+/-- The code of a literal: its sign bit (`true` if positive), then its variable
+index in unary. -/
 def encodeLiteral (l : Literal) : Word :=
   l.positive :: writeNat l.var
 
+/-- Parse a literal, as written by `encodeLiteral`. -/
 def readLiteral : Parser Literal
   | [] => none
   | sign :: rest => do
@@ -176,21 +198,28 @@ def readLiteral : Parser Literal
   cases l
   simp [encodeLiteral, readLiteral]
 
+/-- The code of a clause: the list of its literals. -/
 def encodeClause : Clause → Word := writeList encodeLiteral
+
+/-- Parse a clause, as written by `encodeClause`. -/
 def readClause : Parser Clause := readList readLiteral
 
 @[simp] theorem readClause_encodeClause (c : Clause) (rest : Word) :
     readClause (encodeClause c ++ rest) = some (c, rest) :=
   readList_writeList readLiteral encodeLiteral readLiteral_encodeLiteral c rest
 
+/-- The code of a CNF formula: the list of its clauses. -/
 def encode : CNF → Word := writeList encodeClause
+
+/-- Parse a formula, as written by `encode`. -/
 def readCNF : Parser CNF := readList readClause
 
 @[simp] theorem readCNF_encode (f : CNF) (rest : Word) :
     readCNF (encode f ++ rest) = some (f, rest) :=
   readList_writeList readClause encodeClause readClause_encodeClause f rest
 
-/-- Parse an entire word, rejecting trailing bits as well as malformed prefixes. -/
+/-- Decode a whole word as a formula: `none` unless the word is exactly the code
+`encode f` of a formula `f`, in which case the result is `some f`. -/
 def decode (input : Word) : Option CNF :=
   match readCNF input with
   | some (f, []) => some f
@@ -214,31 +243,159 @@ theorem encode_prefix_free {f g : CNF} {rest : Word}
   have hp : (g, ([] : Word)) = (f, rest) := Option.some.inj hf
   exact ⟨(congrArg Prod.fst hp).symm, (congrArg Prod.snd hp).symm⟩
 
-/-- SAT as a language of binary words; failed decodings are not members. -/
+/-- SAT: the words `encode f` with `f` a satisfiable CNF formula. A word that is
+not the code of a formula is not in SAT. -/
 def SAT (input : Word) : Prop :=
-  ∃ f, decode input = some f ∧ Satisfiable f
+  ∃ f, encode f = input ∧ Satisfiable f
 
-/-- 3-SAT uses the same encoding and clauses of at most three literals. -/
+/-- 3-SAT: the words `encode f` with `f` a satisfiable CNF formula all of whose
+clauses have at most three literals. -/
 def ThreeSAT (input : Word) : Prop :=
-  ∃ f, decode input = some f ∧ IsThreeCNF f ∧ Satisfiable f
+  ∃ f, encode f = input ∧ IsThreeCNF f ∧ Satisfiable f
 
 @[simp] theorem SAT_encode_iff (f : CNF) : SAT (encode f) ↔ Satisfiable f := by
-  simp [SAT]
+  constructor
+  · rintro ⟨g, hg, hs⟩
+    rwa [encode_injective g f hg] at hs
+  · exact fun hs => ⟨f, rfl, hs⟩
 
 @[simp] theorem ThreeSAT_encode_iff (f : CNF) :
     ThreeSAT (encode f) ↔ IsThreeCNF f ∧ Satisfiable f := by
-  simp [ThreeSAT]
+  constructor
+  · rintro ⟨g, hg, h3, hs⟩
+    rw [encode_injective g f hg] at h3 hs
+    exact ⟨h3, hs⟩
+  · exact fun ⟨h3, hs⟩ => ⟨f, rfl, h3, hs⟩
 
 theorem not_SAT_of_decode_none {input : Word} (h : decode input = none) :
     ¬ SAT input := by
-  simp [SAT, h]
+  rintro ⟨f, rfl, _⟩
+  simp at h
 
 theorem not_ThreeSAT_of_decode_none {input : Word} (h : decode input = none) :
     ¬ ThreeSAT input := by
-  simp [ThreeSAT, h]
+  rintro ⟨f, rfl, _⟩
+  simp at h
 
 theorem ThreeSAT_implies_SAT {input : Word} (h : ThreeSAT input) : SAT input := by
   obtain ⟨f, hf, _, hs⟩ := h
   exact ⟨f, hf, hs⟩
+
+/-- A successful unary parser determines exactly the consumed prefix. -/
+theorem readNat_eq_some {input : Word} {n : Nat} {rest : Word}
+    (h : readNat input = some (n, rest)) : input = writeNat n ++ rest := by
+  induction input generalizing n with
+  | nil => simp [readNat] at h
+  | cons bit input ih =>
+    cases bit with
+    | false =>
+      simp only [readNat, Option.some.injEq, Prod.mk.injEq] at h
+      rcases h with ⟨rfl, rfl⟩
+      rfl
+    | true =>
+      cases hp : readNat input with
+      | none => simp [readNat, hp] at h
+      | some pair =>
+        rcases pair with ⟨m, tail⟩
+        simp [readNat, hp] at h
+        rcases h with ⟨rfl, rfl⟩
+        simp [writeNat, ih hp]
+
+theorem readLiteral_eq_some {input : Word} {l : Literal} {rest : Word}
+    (h : readLiteral input = some (l, rest)) : input = encodeLiteral l ++ rest := by
+  cases input with
+  | nil => simp [readLiteral] at h
+  | cons bit input =>
+    cases hp : readNat input with
+    | none => simp [readLiteral, hp] at h
+    | some pair =>
+      rcases pair with ⟨n, tail⟩
+      simp [readLiteral, hp] at h
+      rcases h with ⟨rfl, rfl⟩
+      simp [encodeLiteral, readNat_eq_some hp]
+
+theorem readMany_eq_some {α : Type} (parse : Parser α) (enc : α → Word)
+    (hparse : ∀ {input x rest}, parse input = some (x, rest) → input = enc x ++ rest)
+    {n : Nat} {input : Word} {xs : List α} {rest : Word}
+    (h : readMany parse n input = some (xs, rest)) :
+    xs.length = n ∧ input = writeValues enc xs ++ rest := by
+  induction n generalizing input xs with
+  | zero =>
+    simp only [readMany, Option.some.injEq, Prod.mk.injEq] at h
+    rcases h with ⟨rfl, rfl⟩
+    simp [writeValues]
+  | succ n ih =>
+    cases hp : parse input with
+    | none => simp [readMany, hp] at h
+    | some pair =>
+      rcases pair with ⟨x, tail⟩
+      cases ht : readMany parse n tail with
+      | none => simp [readMany, hp, ht] at h
+      | some pair =>
+        rcases pair with ⟨ys, tail'⟩
+        simp [readMany, hp, ht] at h
+        rcases h with ⟨rfl, rfl⟩
+        obtain ⟨hlen, htail⟩ := ih ht
+        constructor
+        · simp [hlen]
+        · rw [hparse hp, htail]
+          simp [writeValues, List.append_assoc]
+
+theorem readList_eq_some {α : Type} (parse : Parser α) (enc : α → Word)
+    (hparse : ∀ {input x rest}, parse input = some (x, rest) → input = enc x ++ rest)
+    {input : Word} {xs : List α} {rest : Word}
+    (h : readList parse input = some (xs, rest)) : input = writeList enc xs ++ rest := by
+  cases hp : readNat input with
+  | none => simp [readList, hp] at h
+  | some pair =>
+    rcases pair with ⟨n, tail⟩
+    simp [readList, hp] at h
+    obtain ⟨hlen, htail⟩ := readMany_eq_some parse enc hparse h
+    rw [readNat_eq_some hp, htail]
+    simp [writeList, hlen, List.append_assoc]
+
+theorem readClause_eq_some {input : Word} {c : Clause} {rest : Word}
+    (h : readClause input = some (c, rest)) : input = encodeClause c ++ rest :=
+  readList_eq_some readLiteral encodeLiteral readLiteral_eq_some h
+
+theorem readCNF_eq_some {input : Word} {f : CNF} {rest : Word}
+    (h : readCNF input = some (f, rest)) : input = encode f ++ rest :=
+  readList_eq_some readClause encodeClause readClause_eq_some h
+
+/-- Every accepted word is the unique canonical encoding of its decoded formula. -/
+theorem decode_eq_some_iff (input : Word) (f : CNF) :
+    decode input = some f ↔ input = encode f := by
+  constructor
+  · intro h
+    cases hp : readCNF input with
+    | none => simp [decode, hp] at h
+    | some pair =>
+      rcases pair with ⟨g, tail⟩
+      cases tail with
+      | nil =>
+        have hg : g = f := by simpa [decode, hp] using h
+        subst g
+        simpa using readCNF_eq_some hp
+      | cons bit tail => simp [decode, hp] at h
+  · rintro rfl
+    exact decode_encode f
+
+/-- Membership in SAT, read through the parser `decode`. -/
+theorem SAT_iff_decode (input : Word) :
+    SAT input ↔ ∃ f, decode input = some f ∧ Satisfiable f := by
+  constructor
+  · rintro ⟨f, rfl, hs⟩
+    exact ⟨f, decode_encode f, hs⟩
+  · rintro ⟨f, hf, hs⟩
+    exact ⟨f, ((decode_eq_some_iff input f).mp hf).symm, hs⟩
+
+/-- Membership in 3-SAT, read through the parser `decode`. -/
+theorem ThreeSAT_iff_decode (input : Word) :
+    ThreeSAT input ↔ ∃ f, decode input = some f ∧ IsThreeCNF f ∧ Satisfiable f := by
+  constructor
+  · rintro ⟨f, rfl, h3, hs⟩
+    exact ⟨f, decode_encode f, h3, hs⟩
+  · rintro ⟨f, hf, h3, hs⟩
+    exact ⟨f, ((decode_eq_some_iff input f).mp hf).symm, h3, hs⟩
 
 end Complexity.SAT
