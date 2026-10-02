@@ -148,7 +148,7 @@ Ceti or CSLib; a registered entry, this one included, is not an allowed import.
 So a downstream entry that states "`L` is NP-hard" or "`L` is NP-complete"
 works as follows.
 
-1. **Challenge.** Import what the new language needs (Mathlib, say), and copy
+1. Challenge: import what the new language needs (Mathlib, say), and copy
    from this repository's `Challenge.lean`, *verbatim and in the same order*,
    the declarations the statement uses: for `NPHard L` or `NPComplete L`, the
    block from `Symbol` through `NPComplete` (the machine model and the classes);
@@ -157,7 +157,7 @@ works as follows.
    declarations (such as the matcher shared by `step` and `run`) after the
    first declaration that needs them, and Comparator compares those too. Then
    define the new language and state the theorem with `sorry`.
-2. **Solution.** Require this repository in the Lakefile, pinned to a full
+2. Solution: require this repository in the Lakefile, pinned to a full
    commit SHA, `import Complexity`, define the language identically, and prove
    the theorem, typically as
    `npComplete_of_threeSAT_reduction hmem hred` with `hmem : InNP L` and
@@ -168,7 +168,7 @@ works as follows.
    `Restricted.polyRed_leOneLeTwoSAT` give reductions from every NP language
    directly, and `inNP_iff_nondeterministicPolyTime` lets membership be shown
    with a nondeterministic machine instead of a verifier.
-3. **Check.** Run `lake comparator`. It rejects the submission unless every
+3. Check: run `lake comparator`. It rejects the submission unless every
    copied definition is the same term as the library's.
 
 This was tested with a Challenge that imports all of Mathlib (at tag

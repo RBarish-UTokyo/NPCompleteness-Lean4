@@ -1,8 +1,8 @@
 # Submitting to Palomar
 
-The repository is prepared for [Palomar](https://palomar-registry.org/how-to-submit) but has
-**not** been submitted. Submission is a decision for the responsible maintainer. This page
-lists what remains and what submitting publishes.
+The repository is prepared for [Palomar](https://palomar-registry.org/how-to-submit) but has not
+been submitted. Submission is a decision for the responsible maintainer. This page lists what
+remains and what submitting publishes.
 
 ## What is ready
 
@@ -21,19 +21,19 @@ lists what remains and what submitting publishes.
 
 ## Before submitting
 
-1. **Fill in the people and review the credits.** `project.authors` and
+1. Fill in the people and review the credits. `project.authors` and
    `project.responsible_maintainers` in `formalization.yaml` are placeholders: enter the
    responsible people (Palomar reserves these fields for humans), then run
    `python3 scripts/check_submission.py --submission`, which rejects placeholders. Read
    `Challenge.lean`, and check the AI credits in `formalization.yaml` (`automation`) and in
    the README.
-2. **Use a public repository.** Palomar fetches only public GitHub repositories. The
+2. Use a public repository. Palomar fetches only public GitHub repositories. The
    repository root is the Lean project, so no project path is needed.
-3. **Fix the commit.** Merge the work into the branch you want, push, and let the workflow
+3. Fix the commit. Merge the work into the branch you want, push, and let the workflow
    "Verify Lean and Comparator" pass on that exact commit. Record the full 40-character SHA
    (`git rev-parse HEAD`). Any later change, even to metadata, needs a new commit and a new
    submission.
-4. **Submit** at <https://submit.palomar-registry.org/>: the repository, the SHA, Comparator
+4. Submit at <https://submit.palomar-registry.org/>: the repository, the SHA, Comparator
    path `comparator.json`, and your relationship to the work (responsible author or maintainer).
    Keep the status-page link; it is the only way back to the submission.
 
@@ -47,10 +47,10 @@ of the repository become public) and withdrawing.
 
 ## Expect the review to weigh
 
-* **Research interest and prior work.** Palomar's editorial review asks whether the result could
+* Research interest and prior work: Palomar's editorial review asks whether the result could
   warrant a research paper and has a credible audience. The Cook–Levin theorem is central to
   complexity theory, and its mechanizations have been published (ITP 2021, the Archive of Formal
   Proofs). But several complete mechanizations exist, including Complexitylib in Lean 4 (see
   "Other formalizations" in the README); the metadata states this and claims no priority.
-* **Encoding choices.** Unary variable indices and the "at most three literals" convention are
+* Encoding choices: unary variable indices and the "at most three literals" convention are
   disclosed in `formalization.yaml` (`fidelity`) and the README.
