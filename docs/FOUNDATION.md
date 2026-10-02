@@ -143,8 +143,8 @@ quantifies over the explicit `InNP` definition.
 ## Reusing the result in a Palomar submission
 
 Ordinary Lean reuse and Challenge admissibility are separate matters. A
-Palomar Challenge may import only Lean core and the allowlisted Mathlib, Tau
-Ceti or CSLib; a registered entry, this one included, is not an allowed import.
+Palomar Challenge may import only Lean core and the pinned, allowlisted Mathlib
+or Tau Ceti; a registered entry, this one included, is not an allowed import.
 So a downstream entry that states "`L` is NP-hard" or "`L` is NP-complete"
 works as follows.
 

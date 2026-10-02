@@ -15,7 +15,7 @@ Lean release (v4.35.0-rc2), a rehearsal of Palomar's mechanical verification pas
 build`, `lake check`, and the sandboxed `lake comparator --paranoid`, in which Lean's kernel and
 the independent checkers leanchecker (paranoid mode), lean4lean, NanoDa, con-leche and con-ron
 all accept the proof ("Your solution is okay!"). [docs/VERIFICATION.md](docs/VERIFICATION.md)
-records these runs. The repository has not been submitted to Palomar.
+records these runs.
 
 ## AI disclosure
 
@@ -308,7 +308,7 @@ of date. Comparator, not the generator, is what establishes that the statements 
 | `Examples/` | `Sanity.lean` (tests of the definitions) and `Downstream.lean` (using the results). |
 | `docs/FOUNDATION.md` | How to use the library to prove other problems NP-complete. |
 | `docs/VERIFICATION.md` | Record of the verification runs. |
-| `docs/SUBMISSION.md` | Checklist for a future Palomar submission. |
+| `docs/SUBMISSION.md` | How the repository meets Palomar's submission standard. |
 | `scripts/` | Challenge generator, submission preflight, Palomar rehearsal. |
 
 ## Using the results
@@ -324,7 +324,7 @@ examples.
 
 ### Downstream Palomar entries
 
-A Palomar Challenge may import only Lean core and the allowlisted Mathlib, Tau Ceti or CSLib,
+A Palomar Challenge may import only Lean core and the pinned, allowlisted Mathlib or Tau Ceti,
 and a registered entry does not become an allowed import. A later entry claiming that some
 problem is NP-hard or NP-complete therefore copies the definitions it needs from
 `Challenge.lean` verbatim (for `NPHard`/`NPComplete` statements, everything up to `NPComplete`;

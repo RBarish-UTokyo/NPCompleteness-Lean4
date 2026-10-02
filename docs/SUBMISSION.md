@@ -1,32 +1,31 @@
 # Submitting to Palomar
 
-The repository is prepared for [Palomar](https://palomar-registry.org/how-to-submit) but has not
-been submitted. Submission is a decision for the responsible maintainer. This page lists what
-remains and what submitting publishes.
+This page records how the repository meets the
+[Palomar](https://palomar-registry.org/how-to-submit) submission standard, the submission
+steps, and what submitting publishes.
 
 ## What is ready
 
 | Requirement (Palomar submission standard) | Here |
 | --- | --- |
-| `lean-toolchain` names a supported release (minimum v4.35.0-rc2) | `leanprover/lean4:v4.35.0-rc2` |
+| `lean-toolchain` pins a supported Lean release | `leanprover/lean4:v4.35.0-rc2` |
 | Exactly one Lakefile, committed `lake-manifest.json` | `lakefile.toml`; no dependencies |
 | Every Lean file uses `module`, at most 10,000 lines | checked by `scripts/check_submission.py` |
 | Challenge at most 1,000 lines and 100 KiB (warning above 300 lines or 32 KiB) | 464 lines, about 19 KiB: Palomar will give its non-blocking size warning (over 300 lines) |
-| Challenge imports only Lean core, Mathlib, Tau Ceti or CSLib | `Init` only |
+| Challenge imports resolve to Lean core or the allowlisted Mathlib or Tau Ceti | `Init` only |
 | `comparator.json` with the accepted keys and axioms | eight theorems; `propext`, `Quot.sound`, `Classical.choice` |
 | Exactly one licence file, matching `project.license` | `LICENSE`, Apache-2.0 |
-| `formalization.yaml` (v0.4) with Palomar's mandatory fields | validated against the v0.4 schema and by the preflight; author and maintainer names still to be filled in |
+| `formalization.yaml` (v0.4) with Palomar's mandatory fields | validated against the v0.4 schema and by the preflight |
 | Narrative account: theorems, sources, limitations, AI use, review, licence | `README.md`, `formalization.yaml`, docstrings in `Challenge.lean` |
 | Comparator accepts with NanoDa | `scripts/palomar_dryrun.sh`; see `docs/VERIFICATION.md` |
 
-## Before submitting
+## Submission steps
 
-1. Fill in the people and review the credits. `project.authors` and
-   `project.responsible_maintainers` in `formalization.yaml` are placeholders: enter the
-   responsible people (Palomar reserves these fields for humans), then run
-   `python3 scripts/check_submission.py --submission`, which rejects placeholders. Read
-   `Challenge.lean`, and check the AI credits in `formalization.yaml` (`automation`) and in
-   the README.
+1. Check the people and the credits. `project.authors` and `project.responsible_maintainers`
+   in `formalization.yaml` name the responsible people (Palomar reserves these fields for
+   humans); `python3 scripts/check_submission.py --submission` rejects placeholder names.
+   Read `Challenge.lean`, and check the AI credits in `formalization.yaml` (`automation`) and
+   in the README.
 2. Use a public repository. Palomar fetches only public GitHub repositories. The
    repository root is the Lean project, so no project path is needed.
 3. Fix the commit. Merge the work into the branch you want, push, and let the workflow

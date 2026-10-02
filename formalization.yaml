@@ -56,13 +56,11 @@ project:
     Palomar, with the variants and the nondeterministic characterization proved by Claude
     agents. The proof uses only the axioms propext, Classical.choice and
     Quot.sound.
-  # Palomar requires the names of the responsible people (humans only); fill in before
-  # submitting and check with `python3 scripts/check_submission.py --submission`.
   authors:
-    - "[to be completed before submission]"
+    - "Robert D. Barish"
   license: "Apache-2.0"
   responsible_maintainers:
-    - "[to be completed before submission]"
+    - "Robert D. Barish"
 
 classification:
   arxiv: [cs.CC, cs.LO]
