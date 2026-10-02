@@ -1,0 +1,19 @@
+name = "np-completeness"
+version = "0.0.0"
+defaultTargets = ["Complexity", "Audit", "Solution", "Examples"]
+
+[[lean_lib]]
+name = "Complexity"
+
+[[lean_lib]]
+name = "Challenge"
+
+[[lean_lib]]
+name = "Audit"
+
+[[lean_lib]]
+name = "Solution"
+
+[[lean_lib]]
+name = "Examples"
+roots = ["Examples.Downstream"]
